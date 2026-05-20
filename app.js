@@ -1111,14 +1111,16 @@ function renderJobs() {
 
     const searchQuery = document.getElementById("job-search").value.toLowerCase();
     const filterType = document.getElementById("job-filter-type").value;
+    const filterStatus = document.getElementById("job-filter-status").value;
 
     const filteredJobs = state.jobs.filter(job => {
-        const matchesSearch = job.customer.toLowerCase().includes(searchQuery) || 
+        const matchesSearch = job.customer.toLowerCase().includes(searchQuery) ||
                               job.id.toLowerCase().includes(searchQuery) ||
                               job.driverName.toLowerCase().includes(searchQuery) ||
                               job.subconName.toLowerCase().includes(searchQuery);
         const matchesType = filterType === "all" || job.type === filterType;
-        return matchesSearch && matchesType;
+        const matchesStatus = filterStatus === "all" || job.status === filterStatus;
+        return matchesSearch && matchesType && matchesStatus;
     });
 
     if (filteredJobs.length === 0) {
@@ -1305,12 +1307,15 @@ function renderJobStatusConfirmations() {
     tbody.innerHTML = "";
 
     const searchQuery = document.getElementById("confirm-job-search").value.toLowerCase();
+    const filterStatus = document.getElementById("confirm-job-filter-status").value;
 
     const filteredJobs = state.jobs.filter(job => {
-        return job.id.toLowerCase().includes(searchQuery) ||
+        const matchesSearch = job.id.toLowerCase().includes(searchQuery) ||
                job.customer.toLowerCase().includes(searchQuery) ||
                job.driverName.toLowerCase().includes(searchQuery) ||
                job.truckNo.toLowerCase().includes(searchQuery);
+        const matchesStatus = filterStatus === "all" || job.status === filterStatus;
+        return matchesSearch && matchesStatus;
     });
 
     if (filteredJobs.length === 0) {
@@ -1673,10 +1678,10 @@ function viewInvoice(invoiceId) {
     previewEl.innerHTML = `
         <div class="doc-header">
             <div class="company-info">
-                <h2>FLEET PRO CO., LTD.</h2>
-                <p>123/45 ถนนเทพรัตน กม.10 ต.บางแก้ว อ.บางพลี จ.สมุทรปราการ 10540</p>
-                <p>เลขประจำตัวผู้เสียภาษี: 0115563000999</p>
-                <p>โทร. 02-316-xxxx | Email: account@fleetpro.co.th</p>
+                <h2>PornManee 24h Transport.</h2>
+                <p>Tambon Nong Kham, Si Racha, Chon Buri 20110</p>
+                <p>เลขประจำตัวผู้เสียภาษี: XXXXX</p>
+                <p>โทร. 038-xxxxxx | Email: pm-24h@hotmail.com</p>
             </div>
             <div class="doc-title-area">
                 <h2>ใบแจ้งหนี้ / ใบวางบิล</h2>
@@ -1698,7 +1703,7 @@ function viewInvoice(invoiceId) {
                 <h4>การจ่ายชำระ (Payment Details)</h4>
                 <p>โอนเงินเข้าบัญชี:</p>
                 <p><strong>ธนาคารไทยพาณิชย์ (SCB)</strong></p>
-                <p>ชื่อบัญชี: บจก. ฟลีท โปร</p>
+                <p>ชื่อบัญชี: PornManee 24h Transport.</p>
                 <p>เลขที่บัญชี: 123-4-56789-0</p>
             </div>
         </div>
@@ -1751,7 +1756,7 @@ function viewInvoice(invoiceId) {
             <div>
                 <div class="sig-line"></div>
                 <p>ผู้มีอำนาจลงนาม</p>
-                <p>ในนาม บจก. ฟลีท โปร</p>
+                <p>ในนาม PornManee 24h Transport.</p>
             </div>
         </div>
     `;
@@ -1865,9 +1870,9 @@ function viewReceipt(receiptId) {
     previewEl.innerHTML = `
         <div class="doc-header">
             <div class="company-info">
-                <h2>FLEET PRO CO., LTD.</h2>
-                <p>123/45 ถนนเทพรัตน กม.10 ต.บางแก้ว อ.บางพลี จ.สมุทรปราการ 10540</p>
-                <p>เลขประจำตัวผู้เสียภาษี: 0115563000999</p>
+                <h2>PornManee 24h Transport.</h2>
+                <p>Tambon Nong Kham, Si Racha, Chon Buri 20110</p>
+                <p>เลขประจำตัวผู้เสียภาษี: XXXXX</p>
             </div>
             <div class="doc-title-area">
                 <h2 style="color:#10b981;">ใบเสร็จรับเงิน</h2>
@@ -1941,7 +1946,7 @@ function viewReceipt(receiptId) {
             <div>
                 <div class="sig-line"></div>
                 <p>ผู้มีอำนาจรับชำระเงิน</p>
-                <p>ในนาม บจก. ฟลีท โปร</p>
+                <p>ในนาม PornManee 24h Transport.</p>
             </div>
         </div>
     `;
@@ -2013,8 +2018,8 @@ function viewSalarySlip(driverId, trips, tripAllowances, deductions, netPay) {
 
     previewEl.innerHTML = `
         <div class="company-info" style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-            <h2>บจก. ฟลีท โปร (ใบจ่ายเงินเดือนพนักงาน)</h2>
-            <p style="font-size:11px; color:var(--text-muted);">FLEET PRO SALARY SLIP PERIOD: ${period}</p>
+            <h2>PornManee 24h Transport. (ใบจ่ายเงินเดือนพนักงาน)</h2>
+            <p style="font-size:11px; color:var(--text-muted);">PORNMANEE 24H TRANSPORT SALARY SLIP PERIOD: ${period}</p>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; font-size:12px; margin-bottom: 15px; background:#f8fafc; padding: 10px; border-radius: 6px; border:1px solid #cbd5e1;">
@@ -2145,7 +2150,7 @@ function viewSubconSlip(subconId, jobCount, subCostTotal, wht3, netPay) {
     previewEl.innerHTML = `
         <div class="company-info" style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
             <h2>ใบสำคัญสั่งจ่ายผู้รับเหมาช่วง (Payment Voucher)</h2>
-            <p>จัดทำโดย บจก. ฟลีท โปร | โทร. 02-316-xxxx</p>
+            <p>จัดทำโดย PornManee 24h Transport. | โทร. 038-xxxxxx</p>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; font-size:12px; margin-bottom: 15px; background:#f8fafc; padding: 10px; border-radius: 6px; border:1px solid #cbd5e1;">
@@ -2211,9 +2216,11 @@ function setupSearchListeners() {
     // Jobs Search & Filter
     document.getElementById("job-search").addEventListener("input", renderJobs);
     document.getElementById("job-filter-type").addEventListener("change", renderJobs);
+    document.getElementById("job-filter-status").addEventListener("change", renderJobs);
 
-    // Confirm jobs search
+    // Confirm jobs search & filter
     document.getElementById("confirm-job-search").addEventListener("input", renderJobStatusConfirmations);
+    document.getElementById("confirm-job-filter-status").addEventListener("change", renderJobStatusConfirmations);
 
     // Customer Master search
     document.getElementById("customer-search").addEventListener("input", renderCustomers);
