@@ -1,3 +1,58 @@
+<!--
+================================================================================
+  บจก. พรมณี 24เอช ทรานสปอร์ต — Fleet Management System
+  Version : V.1
+  Date    : 2026-05-20
+  Author  : Pornmanee 24H Transport Dev Team
+================================================================================
+
+  RELEASE NOTE — V.1 (Initial Release)
+  ─────────────────────────────────────────────────────────────────────────────
+  MODULE 1 · Dashboard
+    - แผงสถิติภาพรวม (ยอดจอง, Job Order, รายรับ, สถานะรถ)
+    - กราฟแสดงแนวโน้มรายเดือน (Chart.js)
+
+  MODULE 2 · การจองคิวรถ (Booking)
+    - สร้าง / แก้ไข / ยกเลิกใบจอง
+    - ระบบปฏิทินจองคิว
+
+  MODULE 3 · ใบสั่งงาน (Job Order)
+    - ออกใบสั่งงานจากใบจอง
+    - ผูกคนขับ + รถ + เส้นทาง
+
+  MODULE 4 · เปิด-ปิดงาน (Confirm Job)
+    - บันทึกเวลาออกรถ / ถึงปลายทาง
+    - อัปเดตสถานะงานแบบ Real-time
+
+  MODULE 5 · การวางบิล & ใบแจ้งหนี้ (Billing)
+    - สร้างใบแจ้งหนี้รายลูกค้า
+    - ติดตามสถานะการชำระเงิน
+
+  MODULE 6 · ใบเสร็จรับเงิน (Receipt)
+    - ออกใบเสร็จอัตโนมัติเมื่อรับชำระ
+    - รองรับหลายช่องทางการชำระ
+
+  MODULE 7 · เงินเดือนคนขับ (Driver Salary)
+    - คำนวณค่าจ้างตามเที่ยวและเงื่อนไข
+    - สรุปรายเดือนต่อคนขับ
+
+  MODULE 8 · ผู้รับเหมาช่วง (Sub Contractor)
+    - บริหารค่าใช้จ่ายผู้รับเหมาช่วง
+    - เชื่อมโยงกับ Job Order
+
+  MASTER DATA
+    - Truck Master   : ข้อมูลรถบรรทุกและสถานะ
+    - Customer Master: ข้อมูลลูกค้าและเครดิต
+    - Driver Master  : ข้อมูลคนขับและใบอนุญาต
+    - Route Master   : เส้นทางและราคาขนส่ง
+
+  INFRASTRUCTURE
+    - Frontend : HTML5 / CSS3 / Vanilla JS
+    - Backend  : Python (server.py) + SQLite (fleet_management.db)
+    - Deploy   : Cloudflare / Procfile-ready
+
+================================================================================
+-->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -72,6 +127,32 @@
                     </a>
                 </li>
 
+                <!-- Reports Group -->
+                <li class="menu-group-label" id="reports-group-label" onclick="toggleReportsGroup()" style="margin-top:4px;">
+                    <span><i class="fa-solid fa-chart-bar" style="margin-right:6px;font-size:10px;"></i>รายงาน (Reports)</span>
+                    <i class="fa-solid fa-chevron-down group-chevron" id="reports-group-chevron"></i>
+                </li>
+                <div class="menu-group-items" id="reports-group-items">
+                    <li class="menu-item" data-tab="report-jobs" data-label="รายงานวิ่งรถ">
+                        <a href="#report-jobs">
+                            <i class="fa-solid fa-truck-moving"></i>
+                            <span>รายงานวิ่งรถ (Job Report)</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tab="report-billing" data-label="รายงานวางบิล">
+                        <a href="#report-billing">
+                            <i class="fa-solid fa-file-invoice"></i>
+                            <span>รายงานวางบิล (Billing Report)</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tab="report-monthly" data-label="รายงานวิ่งประจำเดือน">
+                        <a href="#report-monthly">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span>รายงานวิ่งประจำเดือน</span>
+                        </a>
+                    </li>
+                </div>
+
                 <!-- Master Data Group -->
                 <li class="menu-group-label" id="masterdata-group-label" onclick="toggleMasterGroup()">
                     <span><i class="fa-solid fa-database" style="margin-right:6px;font-size:10px;"></i>Master Data</span>
@@ -105,7 +186,7 @@
                 </div>
             </ul>
             <div class="sidebar-footer">
-                <p><i class="fa-regular fa-copyright"></i> 2026 พรมณี 24H</p>
+                <p><i class="fa-regular fa-copyright"></i> 2026 พรมณี 24H V.1</p>
             </div>
         </aside>
 
@@ -908,6 +989,125 @@
                     </div>
                 </section>
 
+                <!-- Report: วิ่งรถ -->
+                <section id="panel-report-jobs" class="page-panel">
+                    <div class="card" style="margin-bottom:16px;padding:16px;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">วันที่เริ่มต้น</label>
+                                <input type="date" id="rpt-jobs-from" class="form-input" style="width:150px;" oninput="renderReportJobs()">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">วันที่สิ้นสุด</label>
+                                <input type="date" id="rpt-jobs-to" class="form-input" style="width:150px;" oninput="renderReportJobs()">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Booking ID</label>
+                                <select id="rpt-jobs-booking" class="form-input" style="width:130px;" onchange="renderReportJobs()">
+                                    <option value="">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Job No.</label>
+                                <select id="rpt-jobs-jobno" class="form-input" style="width:130px;" onchange="renderReportJobs()">
+                                    <option value="">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">คนขับ</label>
+                                <select id="rpt-jobs-driver" class="form-input" style="width:160px;" onchange="renderReportJobs()">
+                                    <option value="">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">เส้นทาง (ค้นหา)</label>
+                                <input type="text" id="rpt-jobs-route" class="form-input" style="width:160px;" placeholder="ต้นทาง / ปลายทาง" oninput="renderReportJobs()">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">สถานะ</label>
+                                <select id="rpt-jobs-status" class="form-input" style="width:140px;" onchange="renderReportJobs()">
+                                    <option value="">ทั้งหมด</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="clearReportJobsFilters()"><i class="fa-solid fa-xmark"></i> ล้างตัวกรอง</button>
+                            <button class="btn btn-secondary btn-sm" onclick="exportReportJobsCsv()"><i class="fa-solid fa-download"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="card" style="overflow-x:auto;">
+                        <table class="data-table" id="rpt-jobs-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>วันที่</th>
+                                    <th>Booking</th>
+                                    <th>Job No.</th>
+                                    <th>ลูกค้า</th>
+                                    <th>ต้นทาง</th>
+                                    <th>ปลายทาง</th>
+                                    <th>ประเภทรถ</th>
+                                    <th>คนขับ</th>
+                                    <th>ทะเบียน</th>
+                                    <th>ค่าขนส่ง</th>
+                                    <th>สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpt-jobs-tbody">
+                                <tr><td colspan="12" class="text-center" style="color:var(--text-muted);padding:40px;">เลือกช่วงวันที่เพื่อดูรายงาน</td></tr>
+                            </tbody>
+                        </table>
+                        <div id="rpt-jobs-summary" style="padding:12px 16px;font-size:13px;border-top:1px solid var(--border-color);display:none;"></div>
+                    </div>
+                </section>
+
+                <!-- Report: วิ่งประจำเดือน -->
+                <section id="panel-report-monthly" class="page-panel">
+                    <div class="card" style="margin-bottom:16px;padding:16px;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">คนขับ</label>
+                                <select id="rpt-monthly-driver" class="form-input" style="min-width:200px;" onchange="renderReportMonthly()">
+                                    <option value="">-- เลือกคนขับ --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">เดือน/ปี</label>
+                                <input type="month" id="rpt-monthly-month" class="form-input" style="width:160px;" oninput="renderReportMonthly()">
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="printMonthlyReport()"><i class="fa-solid fa-print"></i> พิมพ์</button>
+                        </div>
+                    </div>
+                    <div id="rpt-monthly-output">
+                        <div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">เลือกคนขับและเดือนเพื่อดูรายงาน</div>
+                    </div>
+                </section>
+
+                <!-- Report: วางบิล -->
+                <section id="panel-report-billing" class="page-panel">
+                    <div class="card" style="margin-bottom:16px;padding:16px;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">ลูกค้า</label>
+                                <select id="rpt-bill-customer" class="form-input" style="min-width:220px;" onchange="renderReportBilling()">
+                                    <option value="">-- เลือกลูกค้า --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">เดือน/ปี (วางบิล)</label>
+                                <input type="month" id="rpt-bill-month" class="form-input" style="width:160px;" oninput="renderReportBilling()">
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="printBillingReport()"><i class="fa-solid fa-print"></i> พิมพ์</button>
+                        </div>
+                    </div>
+                    <div id="rpt-bill-output">
+                        <div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">เลือกลูกค้าเพื่อดูรายงานวางบิล</div>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
@@ -1579,6 +1779,17 @@
         }
 
         // Master Data group collapse
+        function toggleReportsGroup() {
+            const label = document.getElementById('reports-group-label');
+            const items = document.getElementById('reports-group-items');
+            label.classList.toggle('collapsed-group');
+            items.classList.toggle('hidden');
+            localStorage.setItem('reportsGroupHidden', items.classList.contains('hidden'));
+        }
+        if (localStorage.getItem('reportsGroupHidden') === 'true') {
+            document.getElementById('reports-group-label').classList.add('collapsed-group');
+            document.getElementById('reports-group-items').classList.add('hidden');
+        }
         function toggleMasterGroup() {
             const label = document.getElementById('masterdata-group-label');
             const items = document.getElementById('masterdata-group-items');

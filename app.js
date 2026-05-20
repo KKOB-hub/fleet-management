@@ -8,9 +8,9 @@ const usersDb = [
 ];
 
 const rolePermissions = {
-    admin: ["dashboard", "booking", "joborder", "jobstatus", "billing", "receipt", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster"],
-    dispatcher: ["dashboard", "booking", "joborder", "jobstatus", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster"],
-    accountant: ["dashboard", "billing", "receipt", "customers"],
+    admin: ["dashboard", "booking", "joborder", "jobstatus", "billing", "receipt", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster", "report-jobs", "report-billing", "report-monthly"],
+    dispatcher: ["dashboard", "booking", "joborder", "jobstatus", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster", "report-jobs", "report-monthly"],
+    accountant: ["dashboard", "billing", "receipt", "customers", "report-jobs", "report-billing", "report-monthly"],
     driver: ["jobstatus", "salary"]
 };
 
@@ -475,6 +475,18 @@ function updateHeaderTitle(tab) {
             titleEl.innerText = "เส้นทาง & ราคา (Route Master)";
             subtitleEl.innerText = "จัดการเส้นทางและราคาต่อลูกค้า เพื่อให้ Booking auto-fill ราคาได้ทันที";
             break;
+        case "report-jobs":
+            titleEl.innerText = "รายงานวิ่งรถ (Job Report)";
+            subtitleEl.innerText = "ค้นหาและกรองงานขนส่งตามช่วงวันที่ คนขับ เส้นทาง และสถานะ";
+            break;
+        case "report-billing":
+            titleEl.innerText = "รายงานวางบิล (Billing Report)";
+            subtitleEl.innerText = "สรุปรายการขนส่งเพื่อวางบิลลูกค้ารายเดือน";
+            break;
+        case "report-monthly":
+            titleEl.innerText = "รายงานวิ่งประจำเดือน";
+            subtitleEl.innerText = "สรุปการวิ่งงานและรายได้รายเดือนแยกตามคนขับ";
+            break;
     }
 }
 
@@ -517,6 +529,17 @@ function renderTabContent(tab) {
             break;
         case "routemaster":
             renderRouteMasters();
+            break;
+        case "report-jobs":
+            renderReportJobs();
+            break;
+        case "report-billing":
+            populateBillingCustomerSelect();
+            renderReportBilling();
+            break;
+        case "report-monthly":
+            populateMonthlyDriverSelect();
+            renderReportMonthly();
             break;
     }
 }
@@ -3119,4 +3142,468 @@ function filterSubTruckSelect(subconId) {
         subTruckSelect.value = "manual";
         autoFillAssignSubTruck("manual");
     }
+}
+
+// -----------------------------------------
+// REPORT: วิ่งรถ (Job Report)
+// -----------------------------------------
+function _populateReportJobsDropdowns() {
+    var bookingSel = document.getElementById("rpt-jobs-booking");
+    var jobSel     = document.getElementById("rpt-jobs-jobno");
+    var driverSel  = document.getElementById("rpt-jobs-driver");
+    var statusSel  = document.getElementById("rpt-jobs-status");
+    if (!bookingSel) return;
+
+    var fromEl = document.getElementById("rpt-jobs-from");
+    var toEl   = document.getElementById("rpt-jobs-to");
+    var fromVal = fromEl ? fromEl.value : "";
+    var toVal   = toEl   ? toEl.value   : "";
+
+    // preserve current selections
+    var curBk  = bookingSel.value, curJob = jobSel.value;
+    var curDrv = driverSel.value,  curSt  = statusSel ? statusSel.value : "";
+
+    // filter jobs to date range first
+    var filtered = state.jobs.filter(function(j) {
+        var bk = state.bookings.find(function(b) { return b.id === j.bookingId; });
+        var d = bk ? bk.date : "";
+        if (fromVal && d < fromVal) return false;
+        if (toVal   && d > toVal)   return false;
+        return true;
+    });
+
+    var bkIds = [], jobIds = [], drvNames = [], statuses = [];
+    filtered.forEach(function(j) {
+        if (bkIds.indexOf(j.bookingId) === -1 && j.bookingId) bkIds.push(j.bookingId);
+        if (jobIds.indexOf(j.id) === -1) jobIds.push(j.id);
+        var n = j.driverName || j.subconName;
+        if (n && drvNames.indexOf(n) === -1) drvNames.push(n);
+        if (j.status && statuses.indexOf(j.status) === -1) statuses.push(j.status);
+    });
+    bkIds.sort(); jobIds.sort(); drvNames.sort(); statuses.sort();
+
+    bookingSel.innerHTML = '<option value="">ทั้งหมด</option>';
+    bkIds.forEach(function(id) {
+        bookingSel.innerHTML += '<option value="' + id + '"' + (id === curBk ? " selected" : "") + '>' + id + '</option>';
+    });
+
+    jobSel.innerHTML = '<option value="">ทั้งหมด</option>';
+    jobIds.forEach(function(id) {
+        jobSel.innerHTML += '<option value="' + id + '"' + (id === curJob ? " selected" : "") + '>' + id + '</option>';
+    });
+
+    driverSel.innerHTML = '<option value="">ทั้งหมด</option>';
+    drvNames.forEach(function(n) {
+        driverSel.innerHTML += '<option value="' + n + '"' + (n === curDrv ? " selected" : "") + '>' + n + '</option>';
+    });
+
+    if (statusSel) {
+        var allStatuses = ["Pending","Confirmed","In Progress","Completed","Cancelled"];
+        statusSel.innerHTML = '<option value="">ทั้งหมด</option>';
+        allStatuses.forEach(function(s) {
+            var exists = statuses.indexOf(s) !== -1;
+            statusSel.innerHTML += '<option value="' + s + '"' + (s === curSt ? " selected" : "") + (exists ? "" : ' style="color:var(--text-muted);"') + '>' + s + (exists ? "" : " (ไม่มีข้อมูล)") + '</option>';
+        });
+    }
+}
+
+function clearReportJobsFilters() {
+    ["rpt-jobs-booking","rpt-jobs-jobno","rpt-jobs-driver","rpt-jobs-route","rpt-jobs-status"].forEach(function(id) {
+        var el = document.getElementById(id); if (el) el.value = "";
+    });
+    var fromEl = document.getElementById("rpt-jobs-from");
+    var toEl   = document.getElementById("rpt-jobs-to");
+    if (fromEl && toEl) {
+        var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+        fromEl.value = y + "-" + String(m + 1).padStart(2, "0") + "-01";
+        var lastDay = new Date(y, m + 1, 0).getDate();
+        toEl.value   = y + "-" + String(m + 1).padStart(2, "0") + "-" + String(lastDay).padStart(2, "0");
+    }
+    renderReportJobs();
+}
+
+function renderReportJobs() {
+    _populateReportJobsDropdowns();
+    var fromEl = document.getElementById("rpt-jobs-from");
+    var toEl   = document.getElementById("rpt-jobs-to");
+    if (fromEl && !fromEl.value) {
+        var now = new Date();
+        var y = now.getFullYear(), m = now.getMonth();
+        fromEl.value = y + "-" + String(m + 1).padStart(2, "0") + "-01";
+        var lastDay = new Date(y, m + 1, 0).getDate();
+        toEl.value   = y + "-" + String(m + 1).padStart(2, "0") + "-" + String(lastDay).padStart(2, "0");
+    }
+    var fromVal    = fromEl ? fromEl.value : "";
+    var toVal      = toEl ? toEl.value : "";
+    var bookingVal = document.getElementById("rpt-jobs-booking") ? document.getElementById("rpt-jobs-booking").value : "";
+    var jobNoVal   = document.getElementById("rpt-jobs-jobno")   ? document.getElementById("rpt-jobs-jobno").value   : "";
+    var driverVal  = document.getElementById("rpt-jobs-driver")  ? document.getElementById("rpt-jobs-driver").value  : "";
+    var routeVal   = (document.getElementById("rpt-jobs-route")  ? document.getElementById("rpt-jobs-route").value   : "").toLowerCase().trim();
+    var statusVal  = document.getElementById("rpt-jobs-status")  ? document.getElementById("rpt-jobs-status").value  : "";
+    var tbody      = document.getElementById("rpt-jobs-tbody");
+    var summaryEl  = document.getElementById("rpt-jobs-summary");
+    if (!tbody) return;
+
+    var rows = [];
+    state.jobs.forEach(function(job) {
+        var bk = state.bookings.find(function(b) { return b.id === job.bookingId; });
+        var dateStr = bk ? bk.date : "";
+        if (fromVal    && dateStr < fromVal) return;
+        if (toVal      && dateStr > toVal)   return;
+        if (bookingVal && job.bookingId !== bookingVal) return;
+        if (jobNoVal   && job.id !== jobNoVal)          return;
+        var drvLabel = job.driverName || job.subconName || "";
+        if (driverVal  && drvLabel !== driverVal) return;
+        if (routeVal) {
+            var routeText = ((job.origin || "") + " " + (job.destination || "")).toLowerCase();
+            if (routeText.indexOf(routeVal) === -1) return;
+        }
+        if (statusVal  && job.status !== statusVal) return;
+        rows.push({ job: job, bk: bk });
+    });
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center" style="color:var(--text-muted);padding:32px;">ไม่พบข้อมูลในช่วงที่เลือก</td></tr>';
+        summaryEl.style.display = "none";
+        return;
+    }
+
+    var statusBadge = function(s) {
+        var map = { "Completed": "badge-success", "In Progress": "badge-info", "Pending": "badge-warning", "Confirmed": "badge-primary", "Cancelled": "badge-danger" };
+        return '<span class="badge ' + (map[s] || "") + '">' + s + '</span>';
+    };
+
+    var totalPrice = 0;
+    tbody.innerHTML = rows.map(function(r, idx) {
+        var job = r.job, bk = r.bk;
+        var price = bk ? (bk.price || 0) : 0;
+        totalPrice += price;
+        return '<tr>' +
+            '<td>' + (idx + 1) + '</td>' +
+            '<td>' + formatDate(bk ? bk.date : "") + '</td>' +
+            '<td><span class="badge badge-info">' + (bk ? bk.id : "-") + '</span></td>' +
+            '<td><span class="badge badge-primary">' + job.id + '</span></td>' +
+            '<td>' + job.customer + '</td>' +
+            '<td style="font-size:12px;">' + (job.origin || "-") + '</td>' +
+            '<td style="font-size:12px;">' + (job.destination || "-") + '</td>' +
+            '<td>' + (bk ? bk.truckType : "-") + '</td>' +
+            '<td>' + (job.driverName || (job.subconName || "-")) + '</td>' +
+            '<td style="font-size:12px;">' + (job.truckNo || "-") + '</td>' +
+            '<td style="text-align:right;">' + price.toLocaleString('th-TH') + '</td>' +
+            '<td>' + statusBadge(job.status) + '</td>' +
+            '</tr>';
+    }).join("");
+
+    summaryEl.style.display = "flex";
+    summaryEl.style.justifyContent = "space-between";
+    summaryEl.innerHTML = '<span>รวมทั้งหมด <strong>' + rows.length + '</strong> รายการ</span>' +
+        '<span>รวมค่าขนส่ง: <strong style="color:var(--accent-green);">฿' + totalPrice.toLocaleString('th-TH', {minimumFractionDigits:2}) + '</strong></span>';
+}
+
+function exportReportJobsCsv() {
+    var rows = document.querySelectorAll("#rpt-jobs-tbody tr");
+    if (!rows.length || rows[0].cells.length < 3) return;
+    var headers = ["#","วันที่","Booking","Job No.","ลูกค้า","ต้นทาง","ปลายทาง","ประเภทรถ","คนขับ","ทะเบียน","ค่าขนส่ง","สถานะ"];
+    var csv = headers.join(",") + "\n";
+    rows.forEach(function(tr) {
+        var cells = Array.from(tr.cells).map(function(td) { return '"' + td.innerText.replace(/"/g, '""') + '"'; });
+        csv += cells.join(",") + "\n";
+    });
+    var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a"); a.href = url; a.download = "job_report.csv"; a.click();
+}
+
+// -----------------------------------------
+// REPORT: วางบิล (Billing Report)
+// -----------------------------------------
+function populateBillingCustomerSelect() {
+    var sel = document.getElementById("rpt-bill-customer");
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
+    var names = state.customers.map(function(c) { return c.name; });
+    names = names.filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
+    names.forEach(function(n) {
+        sel.innerHTML += '<option value="' + n + '"' + (n === current ? " selected" : "") + '>' + n + '</option>';
+    });
+}
+
+function renderReportBilling() {
+    var customer = document.getElementById("rpt-bill-customer") ? document.getElementById("rpt-bill-customer").value : "";
+    var monthVal = document.getElementById("rpt-bill-month") ? document.getElementById("rpt-bill-month").value : "";
+    var out = document.getElementById("rpt-bill-output");
+    if (!out) return;
+
+    if (!customer) {
+        out.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">เลือกลูกค้าเพื่อดูรายงานวางบิล</div>';
+        return;
+    }
+
+    var jobs = state.jobs.filter(function(j) { return j.customer === customer; });
+    if (monthVal) {
+        jobs = jobs.filter(function(j) {
+            var bk = state.bookings.find(function(b) { return b.id === j.bookingId; });
+            return bk && bk.date && bk.date.startsWith(monthVal);
+        });
+    }
+
+    var cusObj = state.customers.find(function(c) { return c.name === customer; }) || {};
+    var invoicesByCustomer = state.invoices.filter(function(inv) { return inv.customer === customer; });
+
+    var dateLabel = "ทั้งหมด";
+    if (monthVal) {
+        var parts = monthVal.split("-");
+        var y = parts[0], m = parts[1];
+        var months = ["","มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+        dateLabel = "เดือน" + months[parseInt(m)] + " ปี " + (parseInt(y) + 543);
+    }
+
+    var totalPrice = 0, totalManpower = 0, totalOther = 0;
+    var rowsHtml = jobs.map(function(job, idx) {
+        var bk = state.bookings.find(function(b) { return b.id === job.bookingId; }) || {};
+        var price = bk.price || 0;
+        var totalRow = price;
+        totalPrice += price;
+        var inv = invoicesByCustomer.find(function(inv) { return inv.jobIds && inv.jobIds.indexOf(job.id) !== -1; });
+        var invNo = inv ? inv.id : "";
+        return '<tr>' +
+            '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+            '<td>' + formatDate(bk.date) + '</td>' +
+            '<td>' + (bk.shipper || bk.origin || "-") + '</td>' +
+            '<td>' + (job.destination || "-") + '</td>' +
+            '<td>' + (bk.truckType || "-") + '</td>' +
+            '<td style="text-align:right;">' + price.toLocaleString('th-TH') + '</td>' +
+            '<td></td><td></td><td></td><td></td>' +
+            '<td style="text-align:right;font-weight:600;">' + totalRow.toLocaleString('th-TH') + '</td>' +
+            '<td style="font-size:11px;">' + invNo + '</td>' +
+            '<td>' + job.id + '</td>' +
+            '<td style="font-size:11px;">' + (job.truckNo || "-") + '</td>' +
+            '<td style="font-size:11px;color:var(--text-muted);">' + (bk.cargo || "") + '</td>' +
+            '</tr>';
+    }).join("");
+
+    if (!rowsHtml) {
+        rowsHtml = '<tr><td colspan="15" class="text-center" style="padding:24px;color:var(--text-muted);">ไม่พบข้อมูลงาน</td></tr>';
+    }
+
+    var grandTotal = totalPrice + totalManpower + totalOther;
+    var withholding = Math.round(grandTotal * 0.01);
+    var net = grandTotal - withholding;
+
+    out.innerHTML = '<div class="card" id="billing-report-printable" style="padding:0;overflow:hidden;">' +
+        '<div style="padding:20px 24px;border-bottom:1px solid var(--border-color);">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">' +
+                '<div>' +
+                    '<div style="font-size:13px;font-weight:700;color:var(--accent-blue);">บริษัท พรมณี 24เอช ทรานสปอร์ต จำกัด</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);">PORNMANEE 24H TRANSPORT CO.,LTD.</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);">เลขที่ 333/123 หมู่11 ต.หนองขาม อ.ศรีราชา จ.ชลบุรี</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);">Tel.085-3883716 | 091-0053696 | Fax.033-123458</div>' +
+                '</div>' +
+                '<div style="text-align:right;">' +
+                    '<div style="font-size:13px;font-weight:700;">วางบิล ' + dateLabel + '</div>' +
+                    '<div style="font-size:12px;color:var(--text-muted);">ลูกค้า: <strong>' + customer + '</strong></div>' +
+                    (cusObj.address ? '<div style="font-size:11px;color:var(--text-muted);">' + cusObj.address + '</div>' : "") +
+                    '<div style="font-size:11px;margin-top:4px;">วันที่พิมพ์: ' + formatDate(new Date().toISOString().slice(0,10)) + '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div style="overflow-x:auto;">' +
+        '<table class="data-table" style="font-size:12px;">' +
+            '<thead><tr>' +
+                '<th style="text-align:center;">จำนวน</th>' +
+                '<th>Job date</th><th>From</th><th>To</th><th>Truck Size</th>' +
+                '<th style="text-align:right;">Price</th>' +
+                '<th style="text-align:right;">Return trip</th>' +
+                '<th style="text-align:right;">Add Point</th>' +
+                '<th style="text-align:right;">Manpower</th>' +
+                '<th style="text-align:right;">Other</th>' +
+                '<th style="text-align:right;">Total price</th>' +
+                '<th>เลข Invoice</th><th>Job No.</th><th>No Truck</th><th>Remark</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody>' +
+            '<tfoot>' +
+                '<tr style="font-weight:700;">' +
+                    '<td colspan="5" style="text-align:right;padding-right:12px;">ยอดรวม หน้า 1/1</td>' +
+                    '<td style="text-align:right;">' + totalPrice.toLocaleString('th-TH') + '</td>' +
+                    '<td></td><td></td><td></td><td></td>' +
+                    '<td style="text-align:right;">' + grandTotal.toLocaleString('th-TH') + '</td>' +
+                    '<td colspan="4"></td>' +
+                '</tr>' +
+                '<tr>' +
+                    '<td colspan="10" style="text-align:right;padding-right:12px;font-size:12px;">หัก ณ ที่จ่าย 1%</td>' +
+                    '<td style="text-align:right;color:var(--accent-red);">-' + withholding.toLocaleString('th-TH') + '</td>' +
+                    '<td colspan="4"></td>' +
+                '</tr>' +
+                '<tr style="font-weight:800;font-size:14px;">' +
+                    '<td colspan="10" style="text-align:right;padding-right:12px;">ยอดสุทธิ</td>' +
+                    '<td style="text-align:right;color:var(--accent-green);">' + net.toLocaleString('th-TH', {minimumFractionDigits:2}) + '</td>' +
+                    '<td colspan="4"></td>' +
+                '</tr>' +
+            '</tfoot>' +
+        '</table></div></div>';
+}
+
+function printBillingReport() {
+    var el = document.getElementById("billing-report-printable");
+    if (!el) { alert("ยังไม่มีข้อมูลรายงาน"); return; }
+    var w = window.open("", "_blank");
+    w.document.write('<html><head><title>Billing Report</title>' +
+        '<style>body{font-family:sans-serif;padding:20px;color:#000;}' +
+        'table{border-collapse:collapse;width:100%;font-size:11px;}' +
+        'th,td{border:1px solid #ccc;padding:4px 6px;}' +
+        'th{background:#f0f0f0;}tfoot td{font-weight:bold;}' +
+        '@media print{body{padding:0;}}</style></head><body>' +
+        el.outerHTML + '</body></html>');
+    w.document.close();
+    w.focus();
+    w.print();
+}
+
+// -----------------------------------------
+// REPORT: วิ่งประจำเดือน (Monthly Driver Report)
+// -----------------------------------------
+function populateMonthlyDriverSelect() {
+    var sel = document.getElementById("rpt-monthly-driver");
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">-- เลือกคนขับ --</option>';
+    state.drivers.forEach(function(d) {
+        sel.innerHTML += '<option value="' + d.id + '"' + (d.id === cur ? " selected" : "") + '>' + d.name + '</option>';
+    });
+}
+
+function renderReportMonthly() {
+    var driverId = document.getElementById("rpt-monthly-driver") ? document.getElementById("rpt-monthly-driver").value : "";
+    var monthVal = document.getElementById("rpt-monthly-month") ? document.getElementById("rpt-monthly-month").value : "";
+    var out = document.getElementById("rpt-monthly-output");
+    if (!out) return;
+
+    if (!driverId || !monthVal) {
+        out.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">เลือกคนขับและเดือนเพื่อดูรายงาน</div>';
+        return;
+    }
+
+    var drv = state.drivers.find(function(d) { return d.id === driverId; }) || {};
+    var truck = state.trucks.find(function(t) { return t.driverName === drv.name; }) || {};
+
+    var jobs = state.jobs.filter(function(j) {
+        if (j.driverId !== driverId && j.driverName !== drv.name) return false;
+        var bk = state.bookings.find(function(b) { return b.id === j.bookingId; });
+        return bk && bk.date && bk.date.startsWith(monthVal);
+    });
+
+    var parts = monthVal.split("-");
+    var y = parseInt(parts[0]), m = parseInt(parts[1]);
+    var thMonths = ["","มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+    var monthLabel = "เดือน" + thMonths[m] + " ปี " + (y + 543);
+
+    var totalTripAllowance = 0;
+    var rowsHtml = jobs.map(function(job, idx) {
+        var bk = state.bookings.find(function(b) { return b.id === job.bookingId; }) || {};
+        var price = bk.price || 0;
+        var tripAllow = job.tripAllowance || 0;
+        totalTripAllowance += tripAllow;
+        var isReturn = bk.destination && (bk.destination.indexOf("กลับ") !== -1 || bk.destination.indexOf("Return") !== -1) ? "มีงานกลับ" : "";
+        return '<tr>' +
+            '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+            '<td>' + formatDate(bk.date) + '</td>' +
+            '<td>' + (bk.shipper || bk.origin || "-") + '</td>' +
+            '<td>' + (job.destination || "-") + '</td>' +
+            '<td>' + (bk.truckType || "-") + '</td>' +
+            '<td style="text-align:center;font-size:12px;">' + isReturn + '</td>' +
+            '<td style="text-align:right;">' + (tripAllow > 0 ? tripAllow.toLocaleString('th-TH') : "") + '</td>' +
+            '<td style="text-align:right;"></td>' +
+            '<td style="text-align:right;"></td>' +
+            '<td style="font-size:11px;color:var(--text-muted);">' + (job.closeNote || "") + '</td>' +
+            '<td style="text-align:right;font-weight:600;">' + price.toLocaleString('th-TH') + '</td>' +
+            '<td style="text-align:right;"></td>' +
+            '</tr>';
+    }).join("");
+
+    if (!rowsHtml) {
+        rowsHtml = '<tr><td colspan="12" class="text-center" style="padding:24px;color:var(--text-muted);">ไม่พบข้อมูลงานในเดือนนี้</td></tr>';
+    }
+
+    var baseSalary = drv.baseSalary || 0;
+    var phoneAllow = 200;
+    var diligence = 1000;
+    var totalIncome = baseSalary + totalTripAllowance + phoneAllow + diligence;
+    var socialSec = 250;
+    var netTotal = totalIncome - socialSec;
+
+    out.innerHTML = '<div class="card" id="monthly-report-printable" style="padding:0;overflow:hidden;">' +
+        '<div style="padding:16px 20px;border-bottom:1px solid var(--border-color);">' +
+            '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">รูปการรับประจำเดือน</div>' +
+            '<div style="display:flex;gap:32px;flex-wrap:wrap;font-size:12px;">' +
+                '<div><span style="color:var(--text-muted);">ชื่อพนักงานขับรถ: </span><strong>' + (drv.name || "-") + '</strong></div>' +
+                '<div><span style="color:var(--text-muted);">ทะเบียน: </span><strong>' + (truck.plateNo || "-") + '</strong></div>' +
+                '<div><span style="color:var(--text-muted);">รถประเภท: </span><strong>' + (truck.type || "-") + '</strong></div>' +
+                '<div style="margin-left:auto;"><span style="color:var(--text-muted);">วันที่พิมพ์: </span>' + formatDate(new Date().toISOString().slice(0,10)) + '</div>' +
+            '</div>' +
+            '<div style="font-size:12px;margin-top:4px;"><span style="color:var(--text-muted);">' + monthLabel + '</span></div>' +
+        '</div>' +
+        '<div style="overflow-x:auto;">' +
+        '<table class="data-table" style="font-size:12px;">' +
+            '<thead><tr>' +
+                '<th style="text-align:center;width:40px;">ลำดับ</th>' +
+                '<th>วันที่</th><th>เริ่มต้น</th><th>ปลายทาง</th><th>ประเภท</th>' +
+                '<th>งานกลับ</th>' +
+                '<th style="text-align:right;">ค่าเที่ยว</th>' +
+                '<th style="text-align:right;">ค่าเดินรถ</th>' +
+                '<th style="text-align:right;">เวลาทำงาน</th>' +
+                '<th>หมายเหตุ</th>' +
+                '<th style="text-align:right;">ราคาจ้าง</th>' +
+                '<th style="text-align:right;">OT</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody>' +
+            '<tfoot>' +
+                '<tr style="font-weight:700;"><td colspan="6" style="text-align:right;padding-right:8px;">รวม</td>' +
+                    '<td style="text-align:right;">' + totalTripAllowance.toLocaleString('th-TH') + '</td>' +
+                    '<td colspan="5"></td></tr>' +
+            '</tfoot>' +
+        '</table></div>' +
+        '<div style="display:flex;gap:24px;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--border-color);">' +
+            '<div style="min-width:200px;">' +
+                '<table style="font-size:12px;width:100%;border-collapse:collapse;">' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">เงินเดือน</td><td style="text-align:right;padding:4px 0;">' + baseSalary.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">ค่าตุแลธ (เที่ยว)</td><td style="text-align:right;padding:4px 0;">' + totalTripAllowance.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">ค่าโทรศัพท์</td><td style="text-align:right;padding:4px 0;">' + phoneAllow.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">เบี้ยขยัน</td><td style="text-align:right;padding:4px 0;">' + diligence.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="font-weight:700;"><td style="padding:6px 0;">รวม</td><td style="text-align:right;padding:6px 0;color:var(--accent-green);">' + totalIncome.toLocaleString('th-TH') + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+            '<div style="min-width:200px;">' +
+                '<table style="font-size:12px;width:100%;border-collapse:collapse;">' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">คนค่าเที่ยว/พิเศษ</td><td style="text-align:right;padding:4px 0;">' + socialSec.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">เงินค่าเที่ยว</td><td style="text-align:right;padding:4px 0;">' + totalTripAllowance.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="font-weight:700;"><td style="padding:6px 0;">ยอดรวมสุทธิ</td><td style="text-align:right;padding:6px 0;color:var(--accent-green);">' + netTotal.toLocaleString('th-TH') + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+            '<div style="min-width:200px;">' +
+                '<table style="font-size:12px;width:100%;border-collapse:collapse;">' +
+                    '<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:4px 0;">รายการหัก</td><td style="text-align:right;padding:4px 0;">' + socialSec.toLocaleString('th-TH') + '</td></tr>' +
+                    '<tr style="font-weight:800;font-size:13px;background:rgba(0,200,100,0.07);"><td style="padding:6px 0;">คงเหลือ</td><td style="text-align:right;padding:6px 0;color:var(--accent-green);">' + netTotal.toLocaleString('th-TH') + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+        '</div>' +
+        '</div>';
+}
+
+function printMonthlyReport() {
+    var el = document.getElementById("monthly-report-printable");
+    if (!el) { alert("ยังไม่มีข้อมูลรายงาน"); return; }
+    var w = window.open("", "_blank");
+    w.document.write('<html><head><title>Monthly Driver Report</title>' +
+        '<style>body{font-family:sans-serif;padding:20px;color:#000;font-size:12px;}' +
+        'table{border-collapse:collapse;width:100%;}' +
+        'th,td{border:1px solid #ccc;padding:4px 6px;}' +
+        'th{background:#f0f0f0;}' +
+        'tfoot td{font-weight:bold;}' +
+        '.summary-wrap{display:flex;gap:24px;flex-wrap:wrap;padding:12px 0;}' +
+        '@media print{body{padding:0;}}</style></head><body>' +
+        el.outerHTML + '</body></html>');
+    w.document.close();
+    w.focus();
+    w.print();
 }
