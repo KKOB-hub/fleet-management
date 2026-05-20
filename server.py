@@ -109,6 +109,17 @@ def init_db():
     except Exception:
         pass
 
+    # Migrate: add photo/note columns to jobs if not exists
+    for col, definition in [
+        ("openPhoto", "TEXT DEFAULT ''"),
+        ("closePhoto", "TEXT DEFAULT ''"),
+        ("openNote",  "TEXT DEFAULT ''"),
+    ]:
+        try:
+            cursor.execute(f"ALTER TABLE jobs ADD COLUMN {col} {definition}")
+        except Exception:
+            pass
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS customers (
         id TEXT PRIMARY KEY,
@@ -131,6 +142,19 @@ def init_db():
         tripAllowanceRate REAL
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS route_masters (
+        id TEXT PRIMARY KEY,
+        customer TEXT,
+        shipper TEXT,
+        origin TEXT,
+        destination TEXT,
+        truckType TEXT,
+        price REAL,
+        note TEXT
+    )
+    """)
     
     # Migrate: seed customers/drivers if tables are empty
     cursor.execute("SELECT COUNT(*) FROM customers")
@@ -141,7 +165,8 @@ def init_db():
             ("cus-003", "ไทยฟูจิ", "คุณสมศรี", "038-300-003", "เขตนิคมอุตสาหกรรม", "", 45),
             ("cus-004", "ฮาเลอร์ที่ส้ม", "คุณมานพ", "038-400-004", "หนองใหญ่ ชลบุรี", "", 30),
             ("cus-005", "FAST", "คุณเร็ว", "038-500-005", "", "", 15),
-            ("cus-006", "PIONEER", "คุณไพโรจน์", "038-600-006", "", "", 30)
+            ("cus-006", "PIONEER", "คุณไพโรจน์", "038-600-006", "", "", 30),
+            ("cus-007", "KI Pentaplast (THAILAND) LTD.", "", "", "64/48 Moo.4 T.Pluakdaeng A.Pluakdaeng Rayong 21140", "", 30),
         ]
         cursor.executemany("INSERT INTO customers VALUES (?,?,?,?,?,?,?)", customers)
 
@@ -158,6 +183,29 @@ def init_db():
             ("drv-008", "นายบุญเสือ เสือใหญ่", "088-901-2345", "ท.3-00112/62", 15000.0, 1200.0)
         ]
         cursor.executemany("INSERT INTO drivers VALUES (?,?,?,?,?,?)", drivers)
+
+    # Seed route_masters if empty
+    cursor.execute("SELECT COUNT(*) FROM route_masters")
+    if cursor.fetchone()[0] == 0:
+        route_masters = [
+            ("rm-001", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Brilliant (Olic)", "4W", 15000.0, ""),
+            ("rm-002", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Mondelez (Samutprakarn)", "6W", 60000.0, ""),
+            ("rm-003", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "The Government Pharmaceutical (พระราม 6)", "จัมโบ้", 6000.0, ""),
+            ("rm-004", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Mondelez (Morawan)", "6W", 55555.0, ""),
+            ("rm-005", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Reckitt Benckiser (Samutprakarn)", "6W", 60000.0, ""),
+            ("rm-006", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "BG Packaging (Ayuttaya)", "10W Cool", 20000.0, ""),
+            ("rm-007", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "BG Packaging (Ayuttaya)", "6W Cool", 95000.0, ""),
+            ("rm-008", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Eastern Plaspack Co.,Ltd.", "6W Cool", 90000.0, ""),
+            ("rm-009", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Klongtoey", "6W", 65000.0, ""),
+            ("rm-010", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Suwannaphum", "จัมโบ้", 6000.0, ""),
+            ("rm-011", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "N.Y.S ท่าเรือชายสิ้ง", "จัมโบ้", 6570.0, ""),
+            ("rm-012", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Millimed", "4W", 30000.0, ""),
+            ("rm-013", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Thai Meiji Pharmaceutical Co.,Ltd.", "จัมโบ้", 6000.0, ""),
+            ("rm-014", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Fuji Seal Packaging (Thailand) Co.,", "10W Cool", 20000.0, ""),
+            ("rm-015", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Fuji Seal Packaging (Thailand) Co.,", "6W Cool", 76000.0, ""),
+            ("rm-016", "KI Pentaplast (THAILAND) LTD.", "Kloeckner", "Kloeckner", "Fuji Seal Packaging (Thailand) Co.,", "จัมโบ้ Cool", 9999.0, ""),
+        ]
+        cursor.executemany("INSERT INTO route_masters VALUES (?,?,?,?,?,?,?,?)", route_masters)
 
     # Seed default data if database is empty
     cursor.execute("SELECT COUNT(*) FROM bookings")
@@ -184,7 +232,7 @@ def init_db():
             ("JOB-006", "BK-006", "ฮาเลอร์ที่ส้ม", "ฮาเลอร์หนองใหญ่", "ลาดกระบัง 5,000/15,000 ค่ารอลงงาน", "own", "drv-006", "นายสุทิน แก้วดี", "73-0422", 1500.0, "", "", 0.0, "Completed", 4800.0, 800.0, 100.0, "ค้างงาน 1 คืน ค่ารอลงงานตามใบงาน", "ถึงปลายทางสำเร็จ", "Unbilled"),
             ("JOB-007", "BK-007", "FAST", "SWS KM 36", "FLTD", "sub", "", "นายบุญเสือ เสือใหญ่", "WWH-999", 0.0, "sub-001", "บจก. ทีเค ทรานสปอร์ต (WWH)", 6800.0, "Completed", 0.0, 0.0, 0.0, "รับงานซับเรียบร้อย", "ถึงปลายทางสำเร็จ", "Unbilled")
         ]
-        cursor.executemany("INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", jobs)
+        cursor.executemany("INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [j + ("", "", "") for j in jobs])
         
         invoices = [
             ("INV-2603001", "ฟงดา", "2026-03-02", "2026-04-02", 6500.0, 455.0, 65.0, 6890.0, "Paid")
@@ -264,6 +312,13 @@ def get_state():
     except Exception:
         drivers = []
 
+    # 8. Fetch Route Masters
+    try:
+        cursor.execute("SELECT * FROM route_masters")
+        route_masters = [dict(row) for row in cursor.fetchall()]
+    except Exception:
+        route_masters = []
+
     conn.close()
 
     return {
@@ -273,7 +328,8 @@ def get_state():
         "receipts": receipts,
         "trucks": trucks,
         "customers": customers,
-        "drivers": drivers
+        "drivers": drivers,
+        "routeMasters": route_masters
     }
 
 def save_state(state):
@@ -314,7 +370,7 @@ def save_state(state):
         # Insert Jobs
         for job in state.get("jobs", []):
             cursor.execute("""
-            INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 job.get("id"), job.get("bookingId"), job.get("customer"),
                 job.get("origin"), job.get("destination"), job.get("type"),
@@ -322,7 +378,8 @@ def save_state(state):
                 job.get("tripAllowance"), job.get("subconId"), job.get("subconName"),
                 job.get("subconCost"), job.get("status"), job.get("fuelExpense"),
                 job.get("tollExpense"), job.get("otherExpense"), job.get("closeNote"),
-                job.get("lastLocation"), job.get("billingStatus")
+                job.get("lastLocation"), job.get("billingStatus"),
+                job.get("openPhoto", ""), job.get("closePhoto", ""), job.get("openNote", "")
             ))
             
         # Insert Invoices
@@ -395,6 +452,23 @@ def save_state(state):
             cursor.execute("INSERT INTO drivers VALUES (?,?,?,?,?,?)", (
                 drv.get("id"), drv.get("name"), drv.get("phone"),
                 drv.get("license"), drv.get("baseSalary"), drv.get("tripAllowanceRate")
+            ))
+
+        # Insert Route Masters
+        try:
+            cursor.execute("DELETE FROM route_masters")
+        except Exception:
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS route_masters (
+                id TEXT PRIMARY KEY, customer TEXT, shipper TEXT,
+                origin TEXT, destination TEXT, truckType TEXT, price REAL, note TEXT
+            )
+            """)
+        for rm in state.get("routeMasters", []):
+            cursor.execute("INSERT INTO route_masters VALUES (?,?,?,?,?,?,?,?)", (
+                rm.get("id"), rm.get("customer"), rm.get("shipper", ""),
+                rm.get("origin", ""), rm.get("destination"), rm.get("truckType"),
+                rm.get("price"), rm.get("note", "")
             ))
 
         conn.commit()

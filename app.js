@@ -8,8 +8,8 @@ const usersDb = [
 ];
 
 const rolePermissions = {
-    admin: ["dashboard", "booking", "joborder", "jobstatus", "billing", "receipt", "salary", "subcontractor", "trucks", "customers", "drivermaster"],
-    dispatcher: ["dashboard", "booking", "joborder", "jobstatus", "salary", "subcontractor", "trucks", "customers", "drivermaster"],
+    admin: ["dashboard", "booking", "joborder", "jobstatus", "billing", "receipt", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster"],
+    dispatcher: ["dashboard", "booking", "joborder", "jobstatus", "salary", "subcontractor", "trucks", "customers", "drivermaster", "routemaster"],
     accountant: ["dashboard", "billing", "receipt", "customers"],
     driver: ["jobstatus", "salary"]
 };
@@ -24,6 +24,7 @@ let state = {
     trucks: [],
     drivers: [],
     customers: [],
+    routeMasters: [],
     subcontractors: [
         { id: "sub-001", name: "บจก. ทีเค ทรานสปอร์ต (WWH)", contact: "คุณทวีเกียรติ", phone: "038-111-222", taxId: "0105560123456" },
         { id: "sub-002", name: "บจก. มังกรทอง ขนส่ง", contact: "คุณสุรชัย", phone: "038-333-444", taxId: "0205562098765" },
@@ -73,7 +74,26 @@ const defaultMockData = {
         { id: "cus-003", name: "ไทยฟูจิ", contact: "คุณสมศรี", phone: "038-300-003", address: "เขตนิคมอุตสาหกรรม", taxId: "", creditDays: 45 },
         { id: "cus-004", name: "ฮาเลอร์ที่ส้ม", contact: "คุณมานพ", phone: "038-400-004", address: "หนองใหญ่ ชลบุรี", taxId: "", creditDays: 30 },
         { id: "cus-005", name: "FAST", contact: "คุณเร็ว", phone: "038-500-005", address: "", taxId: "", creditDays: 15 },
-        { id: "cus-006", name: "PIONEER", contact: "คุณไพโรจน์", phone: "038-600-006", address: "", taxId: "", creditDays: 30 }
+        { id: "cus-006", name: "PIONEER", contact: "คุณไพโรจน์", phone: "038-600-006", address: "", taxId: "", creditDays: 30 },
+        { id: "cus-007", name: "KI Pentaplast (THAILAND) LTD.", contact: "", phone: "", address: "64/48 Moo.4 T.Pluakdaeng A.Pluakdaeng Rayong 21140", taxId: "", creditDays: 30 }
+    ],
+    routeMasters: [
+        { id: "rm-001", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Brilliant (Olic)", truckType: "4W", price: 15000, note: "" },
+        { id: "rm-002", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Mondelez (Samutprakarn)", truckType: "6W", price: 60000, note: "" },
+        { id: "rm-003", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "The Government Pharmaceutical (พระราม 6)", truckType: "จัมโบ้", price: 6000, note: "" },
+        { id: "rm-004", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Mondelez (Morawan)", truckType: "6W", price: 55555, note: "" },
+        { id: "rm-005", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Reckitt Benckiser (Samutprakarn)", truckType: "6W", price: 60000, note: "" },
+        { id: "rm-006", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "BG Packaging (Ayuttaya)", truckType: "10W Cool", price: 20000, note: "" },
+        { id: "rm-007", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "BG Packaging (Ayuttaya)", truckType: "6W Cool", price: 95000, note: "" },
+        { id: "rm-008", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Eastern Plaspack Co.,Ltd.", truckType: "6W Cool", price: 90000, note: "" },
+        { id: "rm-009", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Klongtoey", truckType: "6W", price: 65000, note: "" },
+        { id: "rm-010", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Suwannaphum", truckType: "จัมโบ้", price: 6000, note: "" },
+        { id: "rm-011", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "N.Y.S ท่าเรือชายสิ้ง", truckType: "จัมโบ้", price: 6570, note: "" },
+        { id: "rm-012", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Millimed", truckType: "4W", price: 30000, note: "" },
+        { id: "rm-013", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Thai Meiji Pharmaceutical Co.,Ltd.", truckType: "จัมโบ้", price: 6000, note: "" },
+        { id: "rm-014", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Fuji Seal Packaging (Thailand) Co.,", truckType: "10W Cool", price: 20000, note: "" },
+        { id: "rm-015", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Fuji Seal Packaging (Thailand) Co.,", truckType: "6W Cool", price: 76000, note: "" },
+        { id: "rm-016", customer: "KI Pentaplast (THAILAND) LTD.", shipper: "Kloeckner", origin: "Kloeckner", destination: "Fuji Seal Packaging (Thailand) Co.,", truckType: "จัมโบ้ Cool", price: 9999, note: "" }
     ],
     drivers: [
         { id: "drv-001", name: "นายสมชาย ยศเล็ก", phone: "081-234-5678", license: "ท.4-00123/64", baseSalary: 15000, tripAllowanceRate: 1200 },
@@ -125,6 +145,7 @@ async function initApp() {
                 state.trucks = dbState.trucks || [];
                 state.customers = dbState.customers || [];
                 state.drivers = dbState.drivers || [];
+                state.routeMasters = dbState.routeMasters || [];
                 console.log("Loaded state from SQLite Database.");
             } else {
                 console.warn("Failed to load from Database API. Falling back to LocalStorage.");
@@ -164,6 +185,8 @@ function loadFromLocalStorage() {
     if (localStorage.getItem("fleet_pro_state")) {
         const savedState = JSON.parse(localStorage.getItem("fleet_pro_state"));
         state = { ...state, ...savedState };
+        state.bookings = state.bookings.map(b => ({ ...b, truckType: b.truckType || "6W" }));
+        state.routeMasters = state.routeMasters || [];
     } else {
         // Load default mock data
         state.bookings = [...defaultMockData.bookings];
@@ -186,7 +209,8 @@ async function saveStateToStorage() {
         receipts: state.receipts,
         trucks: state.trucks,
         customers: state.customers,
-        drivers: state.drivers
+        drivers: state.drivers,
+        routeMasters: state.routeMasters
     }));
 
     // Sync with SQLite Database if in server mode
@@ -204,7 +228,8 @@ async function saveStateToStorage() {
                     receipts: state.receipts,
                     trucks: state.trucks,
                     customers: state.customers,
-                    drivers: state.drivers
+                    drivers: state.drivers,
+                    routeMasters: state.routeMasters
                 })
             });
             if (response.ok) {
@@ -446,6 +471,10 @@ function updateHeaderTitle(tab) {
             titleEl.innerText = "ข้อมูลคนขับรถ (Driver Master)";
             subtitleEl.innerText = "จัดการประวัติพนักงานขับรถ อัตราเงินเดือน และเบี้ยเลี้ยงเที่ยววิ่ง";
             break;
+        case "routemaster":
+            titleEl.innerText = "เส้นทาง & ราคา (Route Master)";
+            subtitleEl.innerText = "จัดการเส้นทางและราคาต่อลูกค้า เพื่อให้ Booking auto-fill ราคาได้ทันที";
+            break;
     }
 }
 
@@ -485,6 +514,9 @@ function renderTabContent(tab) {
             break;
         case "drivermaster":
             renderDriversMaster();
+            break;
+        case "routemaster":
+            renderRouteMasters();
             break;
     }
 }
@@ -529,6 +561,26 @@ function populateFormSelects() {
         bkCustomerSel.innerHTML = `<option value="">-- เลือกจากรายชื่อ --</option>`;
         state.customers.forEach(c => {
             bkCustomerSel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+    }
+
+    // Customer dropdown in route master form
+    const rmCustomerSel = document.getElementById("rm-customer-select");
+    if (rmCustomerSel) {
+        rmCustomerSel.innerHTML = `<option value="">-- เลือกจากรายชื่อ --</option>`;
+        state.customers.forEach(c => {
+            rmCustomerSel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+    }
+
+    // Route master filter dropdown
+    const rmFilterSel = document.getElementById("route-master-filter-customer");
+    if (rmFilterSel) {
+        const currentVal = rmFilterSel.value;
+        rmFilterSel.innerHTML = `<option value="">ทุกลูกค้า</option>`;
+        const uniqueCustomers = [...new Set(state.routeMasters.map(r => r.customer))].sort();
+        uniqueCustomers.forEach(name => {
+            rmFilterSel.innerHTML += `<option value="${name}"${currentVal===name?' selected':''}>${name}</option>`;
         });
     }
 }
@@ -688,6 +740,107 @@ function deleteDriver(id) {
     saveStateToStorage();
     populateFormSelects();
     renderDriversMaster();
+}
+
+// -----------------------------------------
+// 12. ROUTE MASTER CONTROLLER
+// -----------------------------------------
+function renderRouteMasters() {
+    const tbody = document.getElementById("route-masters-tbody");
+    if (!tbody) return;
+    const search = (document.getElementById("route-master-search")?.value || "").toLowerCase();
+    const filterCus = document.getElementById("route-master-filter-customer")?.value || "";
+    const filtered = state.routeMasters.filter(r =>
+        (!filterCus || r.customer === filterCus) &&
+        (r.customer.toLowerCase().includes(search) ||
+         (r.destination || "").toLowerCase().includes(search) ||
+         (r.origin || "").toLowerCase().includes(search))
+    );
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--text-muted);">ไม่มีข้อมูลเส้นทางในระบบ — กด "เพิ่มเส้นทางใหม่" หรือสร้าง Booking แล้วเลือกบันทึกลง Master</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = filtered.map(r => `
+        <tr>
+            <td style="font-weight:600;">${r.customer}</td>
+            <td style="color:var(--text-secondary);">${r.shipper || "-"}</td>
+            <td>${r.origin || "-"}</td>
+            <td style="font-weight:600;">${r.destination}</td>
+            <td><span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-primary);border:1px solid var(--border-color);">${r.truckType}</span></td>
+            <td class="text-right" style="font-weight:600;color:var(--color-primary);">${Number(r.price).toLocaleString()} ฿</td>
+            <td style="font-size:12px;color:var(--text-secondary);">${r.note || "-"}</td>
+            <td class="text-right">
+                <button class="btn btn-secondary btn-sm" onclick="openEditRouteMaster('${r.id}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm" style="background:rgba(220,53,69,0.15);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);" onclick="deleteRouteMaster('${r.id}')"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function openAddRouteMaster(prefill) {
+    document.getElementById("modal-route-master-title").innerHTML = `<i class="fa-solid fa-map-location-dot"></i> เพิ่มเส้นทาง & ราคา`;
+    document.getElementById("rm-edit-id").value = "";
+    document.getElementById("rm-customer").value = prefill?.customer || "";
+    document.getElementById("rm-customer-select").value = prefill?.customer || "";
+    document.getElementById("rm-shipper").value = prefill?.shipper || "";
+    document.getElementById("rm-origin").value = prefill?.origin || "";
+    document.getElementById("rm-destination").value = prefill?.destination || "";
+    document.getElementById("rm-truck-type").value = prefill?.truckType || "6W";
+    document.getElementById("rm-price").value = prefill?.price || "";
+    document.getElementById("rm-note").value = prefill?.note || "";
+    openModal("modal-add-route-master");
+}
+
+function openEditRouteMaster(id) {
+    const r = state.routeMasters.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById("modal-route-master-title").innerHTML = `<i class="fa-solid fa-pen"></i> แก้ไขเส้นทาง & ราคา`;
+    document.getElementById("rm-edit-id").value = r.id;
+    document.getElementById("rm-customer").value = r.customer;
+    document.getElementById("rm-customer-select").value = r.customer;
+    document.getElementById("rm-shipper").value = r.shipper || "";
+    document.getElementById("rm-origin").value = r.origin || "";
+    document.getElementById("rm-destination").value = r.destination;
+    document.getElementById("rm-truck-type").value = r.truckType;
+    document.getElementById("rm-price").value = r.price;
+    document.getElementById("rm-note").value = r.note || "";
+    openModal("modal-add-route-master");
+}
+
+function submitRouteMaster(event) {
+    event.preventDefault();
+    const editId = document.getElementById("rm-edit-id").value;
+    const data = {
+        id: editId || `rm-${Date.now()}`,
+        customer: document.getElementById("rm-customer").value.trim(),
+        shipper: document.getElementById("rm-shipper").value.trim(),
+        origin: document.getElementById("rm-origin").value.trim(),
+        destination: document.getElementById("rm-destination").value.trim(),
+        truckType: document.getElementById("rm-truck-type").value,
+        price: parseFloat(document.getElementById("rm-price").value) || 0,
+        note: document.getElementById("rm-note").value.trim()
+    };
+    if (editId) {
+        const idx = state.routeMasters.findIndex(x => x.id === editId);
+        if (idx !== -1) state.routeMasters[idx] = data;
+    } else {
+        state.routeMasters.push(data);
+    }
+    saveStateToStorage();
+    populateFormSelects();
+    closeModal("modal-add-route-master");
+    document.getElementById("form-add-route-master").reset();
+    document.getElementById("rm-edit-id").value = "";
+    document.getElementById("modal-route-master-title").innerHTML = `<i class="fa-solid fa-map-location-dot"></i> เพิ่มเส้นทาง & ราคา`;
+    renderRouteMasters();
+}
+
+function deleteRouteMaster(id) {
+    if (!confirm("ต้องการลบเส้นทางนี้ออกจาก Master Data?")) return;
+    state.routeMasters = state.routeMasters.filter(x => x.id !== id);
+    saveStateToStorage();
+    populateFormSelects();
+    renderRouteMasters();
 }
 
 // -----------------------------------------
@@ -982,6 +1135,35 @@ function closeModal(modalId) {
 
 function onBookingCustomerSelect(val) {
     if (val) document.getElementById("bk-customer").value = val;
+
+    // Populate route master dropdown for this customer
+    const routeSection = document.getElementById("bk-route-master-section");
+    const routeSelect = document.getElementById("bk-route-select");
+    if (!routeSection || !routeSelect) return;
+
+    const routes = state.routeMasters.filter(r => r.customer === val);
+    if (routes.length === 0) {
+        routeSection.style.display = "none";
+        return;
+    }
+
+    routeSection.style.display = "block";
+    routeSelect.innerHTML = `<option value="">-- เลือกเส้นทาง (หรือระบุเองด้านล่าง) --</option>`;
+    routes.forEach(r => {
+        const label = `${r.origin || r.shipper || "-"} → ${r.destination} [${r.truckType}] ฿${Number(r.price).toLocaleString()}`;
+        routeSelect.innerHTML += `<option value="${r.id}">${label}</option>`;
+    });
+}
+
+function onBookingRouteSelect(routeId) {
+    if (!routeId) return;
+    const r = state.routeMasters.find(x => x.id === routeId);
+    if (!r) return;
+    if (r.shipper) document.getElementById("bk-shipper").value = r.shipper;
+    if (r.origin) document.getElementById("bk-origin").value = r.origin;
+    document.getElementById("bk-destination").value = r.destination;
+    document.getElementById("bk-truck-type").value = r.truckType;
+    document.getElementById("bk-price").value = r.price;
 }
 
 function submitBooking(event) {
@@ -1030,6 +1212,27 @@ function submitBooking(event) {
     };
 
     state.bookings.push(newBooking);
+
+    // Ask to save route to master if not already there
+    const routeExists = state.routeMasters.some(r =>
+        r.customer === customer &&
+        r.destination === destination &&
+        r.truckType === truckType
+    );
+    if (!routeExists && destination && truckType && price > 0) {
+        if (confirm(`บันทึกเส้นทาง "${destination}" [${truckType}] ฿${price.toLocaleString()} ลง Route Master สำหรับลูกค้า "${customer}" หรือไม่?`)) {
+            state.routeMasters.push({
+                id: `rm-${Date.now()}`,
+                customer,
+                shipper,
+                origin,
+                destination,
+                truckType,
+                price,
+                note: ""
+            });
+        }
+    }
 
     // If pre-assigned, automatically spawn a Job Order!
     if (isPreAssigned) {
@@ -1155,16 +1358,176 @@ function renderJobs() {
                 <td><div style="font-size: 13px;">${detailsText}</div></td>
                 <td><div style="font-size: 13px;">${costText}</div></td>
                 <td>${statusBadge}</td>
-                <td class="text-right">
+                <td class="text-right" style="white-space:nowrap;">
+                    <button class="btn btn-secondary btn-icon-only" title="ดูใบปฏิบัติงาน" onclick="viewJobOrder('${job.id}')">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </button>
                     ${job.status !== "Completed" ? `
-                        <button class="btn btn-secondary btn-icon-only" title="อัปเดตหน้างาน" onclick="openConfirmJobModal('${job.id}')">
+                        <button class="btn btn-secondary btn-icon-only" title="อัปเดตหน้างาน" onclick="openConfirmJobModal('${job.id}')" style="margin-left:4px;">
                             <i class="fa-solid fa-location-crosshairs"></i>
                         </button>
-                    ` : `<span style="font-size:12px; color: var(--text-muted);"><i class="fa-solid fa-circle-check"></i> เรียบร้อย</span>`}
+                    ` : ""}
                 </td>
             </tr>
         `;
     });
+}
+
+function togglePreviewPanel(prefix) {
+    const layout = document.getElementById(`${prefix}-layout`) || document.getElementById("job-order-layout");
+    const panel = document.getElementById(`${prefix}-preview-panel`);
+    const body = document.getElementById(`${prefix}-preview-body`);
+    const title = document.getElementById(`${prefix}-preview-title`);
+    const printBtn = document.getElementById(`${prefix}-print-btn`);
+    const icon = document.querySelector(`#${prefix}-toggle-btn i`);
+    if (!panel) return;
+    const collapsed = panel.dataset.collapsed === "1";
+    if (collapsed) {
+        if (layout) layout.style.gridTemplateColumns = "2fr 1fr";
+        body.style.display = "block";
+        title.style.display = "";
+        if (printBtn) printBtn.style.display = "";
+        icon.className = "fa-solid fa-chevron-right";
+        panel.dataset.collapsed = "0";
+    } else {
+        if (layout) layout.style.gridTemplateColumns = "1fr 44px";
+        body.style.display = "none";
+        title.style.display = "none";
+        if (printBtn) printBtn.style.display = "none";
+        icon.className = "fa-solid fa-chevron-left";
+        panel.dataset.collapsed = "1";
+    }
+}
+
+function toggleJobOrderPreview() { togglePreviewPanel("job-order"); }
+
+function viewJobOrder(jobId) {
+    const job = state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+    const booking = state.bookings.find(b => b.id === job.bookingId);
+
+    const previewEl = document.getElementById("job-order-preview-area");
+    const placeholderEl = document.getElementById("job-order-preview-placeholder");
+    if (!previewEl) return;
+
+    // Auto-expand preview panel if collapsed
+    const panel = document.getElementById("job-order-preview-panel");
+    if (panel && panel.dataset.collapsed === "1") toggleJobOrderPreview();
+
+    placeholderEl.style.display = "none";
+    previewEl.style.display = "block";
+
+    const truckType = booking?.truckType || job.truckType || "";
+    const truckTypes = [
+        { label: "4 ล้อ", val: "4W" },
+        { label: "6 ล้อ", val: "6W" },
+        { label: "10 ล้อ", val: "10W" },
+        { label: "ตู้เย็น", val: "Reefer" },
+        { label: "จัมโบ้", val: "จัมโบ้" },
+        { label: "18 ล้อ", val: "18W" },
+        { label: "22 ล้อ", val: "22W" },
+    ];
+    const checkboxes = truckTypes.map(t =>
+        `<span style="margin-right:10px;white-space:nowrap;">
+            <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #000;border-radius:50%;vertical-align:middle;background:${truckType===t.val?'#000':'transparent'};margin-right:3px;"></span>${t.label}
+        </span>`
+    ).join("");
+
+    const driver = state.drivers?.find(d => d.name === job.driverName);
+    const driverTel = driver?.tel || "033-123458 / 085-xxxxxxx";
+    const bookingDate = booking?.date ? new Date(booking.date).toLocaleDateString("th-TH", { day:"2-digit", month:"2-digit", year:"2-digit" }) : "";
+
+    previewEl.innerHTML = `
+        <div style="font-family:'Sarabun','Kanit',sans-serif;font-size:13px;color:#000;padding:4px;">
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:8px;">
+                <div>
+                    <div style="font-size:15px;font-weight:800;line-height:1.3;">บริษัท พรมณี 24 เอช ทรานสปอร์ต จำกัด</div>
+                    <div style="font-size:10px;color:#475569;">PORNMANEE 24 H TRANSPORT COMPANY LIMITED</div>
+                    <div style="font-size:10px;color:#475569;">333/123 ม.11 ต.หนองขาม อ.ศรีราชา จ.ชลบุรี 20110</div>
+                    <div style="font-size:10px;color:#475569;">Tel. 085-3883716, 091-0053696 Fax. 033-123458</div>
+                    <div style="font-size:10px;color:#475569;">E-mail: pmn-24h@hotmail.com</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:16px;font-weight:800;">ใบปฏิบัติงาน</div>
+                    <div style="font-size:13px;font-weight:600;">JOB ORDER</div>
+                    <div style="margin-top:6px;font-size:12px;"><strong>เลขที่:</strong> ${job.id}</div>
+                    <div style="font-size:12px;"><strong>วันที่:</strong> ${bookingDate}</div>
+                </div>
+            </div>
+
+            <!-- Body fields -->
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <tr>
+                    <td style="width:35%;padding:5px 4px;border-bottom:1px solid #ddd;"><strong>ผู้ว่าจ้าง/ลูกค้า:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${job.customer}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>ต้นทาง (Start):</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${job.origin}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>ปลายทาง (Destination):</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${job.destination}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>อัดสินค้าเวลา:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>อัดสินค้าสำเร็จเวลา:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>รับสินค้าสำเร็จเวลา:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>จบงานเวลา:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>ทะเบียนรถ:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${job.truckNo || "-"}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>ประเภทรถ:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${checkboxes}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>พนักงานขับรถ:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${job.driverName || (job.subconName || "-")}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>โทร.:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">${driverTel}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;"><strong>หมายเหตุ:</strong></td>
+                    <td style="padding:5px 4px;border-bottom:1px solid #ddd;">&nbsp;</td>
+                </tr>
+            </table>
+
+            <!-- Signatures -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;text-align:center;">
+                <div>
+                    <div style="border-bottom:1px solid #000;height:44px;margin-bottom:6px;"></div>
+                    <div style="font-size:11px;">ลายเซ็นหัวหน้า / ผู้ว่าจ้าง</div>
+                    <div style="font-size:10px;color:#64748b;">CUSTOMER SIGNATURE</div>
+                </div>
+                <div>
+                    <div style="border-bottom:1px solid #000;height:44px;margin-bottom:6px;"></div>
+                    <div style="font-size:11px;">ผู้ขนงาน</div>
+                    <div style="font-size:10px;color:#64748b;">LOADING</div>
+                </div>
+                <div>
+                    <div style="border-bottom:1px solid #000;height:44px;margin-bottom:6px;"></div>
+                    <div style="font-size:11px;">ผู้ปฏิบัติงาน</div>
+                    <div style="font-size:10px;color:#64748b;">DRIVER</div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function openAssignJobModal(bookingId) {
@@ -1175,17 +1538,34 @@ function openAssignJobModal(bookingId) {
     document.getElementById("assign-bk-id-text").innerText = booking.id;
     document.getElementById("assign-bk-customer-text").innerText = booking.customer;
     document.getElementById("assign-bk-route-text").innerText = `${booking.origin || booking.shipper || "ต้นทาง"} -> ${booking.destination}`;
+    document.getElementById("assign-bk-trucktype-text").innerText = booking.truckType && booking.truckType.trim() ? booking.truckType : "-";
     document.getElementById("assign-bk-price-text").innerText = booking.price.toLocaleString();
 
-    // Populate Own Truck select
+    // Trucks busy on the same booking date (Assigned or In Progress)
+    const busyTruckNos = new Set(
+        state.jobs
+            .filter(j => {
+                const jBk = state.bookings.find(b => b.id === j.bookingId);
+                return jBk && jBk.date === booking.date && ["Assigned", "In Progress"].includes(j.status);
+            })
+            .map(j => j.truckNo)
+    );
+
+    // Populate Own Truck select — same type + available
     const ownTruckSelect = document.getElementById("assign-own-truck-select");
     if (ownTruckSelect) {
         ownTruckSelect.innerHTML = "";
-        const ownTrucks = state.trucks.filter(t => t.ownerType === "own");
-        ownTrucks.forEach(t => {
-            ownTruckSelect.innerHTML += `<option value="${t.plateNo}">${t.plateNo} (${t.driverName})</option>`;
-        });
-        if (ownTrucks.length > 0) {
+        const ownTrucks = state.trucks.filter(t =>
+            t.ownerType === "own" &&
+            t.type === booking.truckType &&
+            !busyTruckNos.has(t.plateNo)
+        );
+        if (ownTrucks.length === 0) {
+            ownTruckSelect.innerHTML = `<option value="">-- ไม่มีรถว่าง (${booking.truckType}) ในวันนี้ --</option>`;
+        } else {
+            ownTrucks.forEach(t => {
+                ownTruckSelect.innerHTML += `<option value="${t.plateNo}">${t.plateNo} (${t.driverName})</option>`;
+            });
             ownTruckSelect.value = ownTrucks[0].plateNo;
             autoFillAssignOwnTruck(ownTrucks[0].plateNo);
         }
@@ -1782,9 +2162,11 @@ function viewInvoice(invoiceId) {
     const invoice = state.invoices.find(i => i.id === invoiceId);
     if (!invoice) return;
 
-    // Build invoice HTML structure inside the sidebar container
     const previewEl = document.getElementById("billing-preview-area");
     const placeholderEl = document.getElementById("billing-preview-placeholder");
+
+    const billingPanel = document.getElementById("billing-preview-panel");
+    if (billingPanel && billingPanel.dataset.collapsed === "1") togglePreviewPanel("billing");
 
     placeholderEl.style.display = "none";
     previewEl.style.display = "block";
@@ -1995,6 +2377,9 @@ function viewReceipt(receiptId) {
     const previewEl = document.getElementById("receipt-preview-area");
     const placeholderEl = document.getElementById("receipt-preview-placeholder");
 
+    const receiptPanel = document.getElementById("receipt-preview-panel");
+    if (receiptPanel && receiptPanel.dataset.collapsed === "1") togglePreviewPanel("receipt");
+
     placeholderEl.style.display = "none";
     previewEl.style.display = "block";
 
@@ -2141,6 +2526,9 @@ function viewSalarySlip(driverId, trips, tripAllowances, deductions, netPay) {
     const previewEl = document.getElementById("salary-slip-area");
     const placeholderEl = document.getElementById("salary-slip-placeholder");
 
+    const salaryPanel = document.getElementById("salary-preview-panel");
+    if (salaryPanel && salaryPanel.dataset.collapsed === "1") togglePreviewPanel("salary");
+
     placeholderEl.style.display = "none";
     previewEl.style.display = "block";
 
@@ -2262,6 +2650,9 @@ function viewSubconSlip(subconId, jobCount, subCostTotal, wht3, netPay) {
 
     const previewEl = document.getElementById("subcon-slip-area");
     const placeholderEl = document.getElementById("subcon-slip-placeholder");
+
+    const subconPanel = document.getElementById("subcon-preview-panel");
+    if (subconPanel && subconPanel.dataset.collapsed === "1") togglePreviewPanel("subcon");
 
     placeholderEl.style.display = "none";
     previewEl.style.display = "block";
@@ -2394,8 +2785,8 @@ function printDoc(elementId) {
         .slip-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #cbd5e1; }
         .slip-row.total { font-weight: 700; color: #10b981; font-size: 16px; border-bottom: none; }
         h4 { margin: 0 0 10px 0; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     `);
-    printWindow.document.styleSheets[0].insertRule("@media print { body { -webkit-print-color-adjust: exact; } }", 0);
     printWindow.document.write('</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write(printContent);
