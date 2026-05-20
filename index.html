@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บจก. พรมณี 24เอช ทรานสปอร์ต - Fleet Management System</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ChartJS for Beautiful Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebar-toggle" title="ย่อ/ขยาย เมนู">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="sidebar-logo" style="padding: 20px 12px;">
+                <i class="fa-solid fa-truck-fast" style="font-size: 20px;"></i>
+                <span class="logo-text" style="font-size: 13px; font-weight: 800; letter-spacing: 0;">พรมณี ทรานสปอร์ต</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-tab="dashboard" data-label="แผงควบคุม">
+                    <a href="#dashboard">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>แผงควบคุม (Dashboard)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="booking" data-label="จองคิวรถ">
+                    <a href="#booking">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>การจองคิวรถ (Booking)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="joborder" data-label="ใบสั่งงาน">
+                    <a href="#joborder">
+                        <i class="fa-solid fa-file-signature"></i>
+                        <span>ใบสั่งงาน (Job Order)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="jobstatus" data-label="เปิด-ปิดงาน">
+                    <a href="#jobstatus">
+                        <i class="fa-solid fa-route"></i>
+                        <span>เปิด-ปิดงาน (Confirm Job)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="billing" data-label="วางบิล">
+                    <a href="#billing">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>การวางบิล & ใบแจ้งหนี้</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="receipt" data-label="ใบเสร็จ">
+                    <a href="#receipt">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>ใบเสร็จรับเงิน (Receipt)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="salary" data-label="เงินเดือน">
+                    <a href="#salary">
+                        <i class="fa-solid fa-id-card-clip"></i>
+                        <span>เงินเดือนคนขับ (Driver Salary)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="subcontractor" data-label="Sub Contractor">
+                    <a href="#subcontractor">
+                        <i class="fa-solid fa-handshake"></i>
+                        <span>ผู้รับเหมาช่วง (Sub Contractor)</span>
+                    </a>
+                </li>
+
+                <!-- Master Data Group -->
+                <li class="menu-group-label" id="masterdata-group-label" onclick="toggleMasterGroup()">
+                    <span><i class="fa-solid fa-database" style="margin-right:6px;font-size:10px;"></i>Master Data</span>
+                    <i class="fa-solid fa-chevron-down group-chevron"></i>
+                </li>
+                <div class="menu-group-items" id="masterdata-group-items">
+                    <li class="menu-item" data-tab="trucks" data-label="Truck Master">
+                        <a href="#trucks">
+                            <i class="fa-solid fa-truck"></i>
+                            <span>ข้อมูลรถบรรทุก (Truck Master)</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tab="customers" data-label="Customer Master">
+                        <a href="#customers">
+                            <i class="fa-solid fa-building-user"></i>
+                            <span>ข้อมูลลูกค้า (Customer Master)</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tab="drivermaster" data-label="Driver Master">
+                        <a href="#drivermaster">
+                            <i class="fa-solid fa-id-card"></i>
+                            <span>ข้อมูลคนขับ (Driver Master)</span>
+                        </a>
+                    </li>
+                </div>
+            </ul>
+            <div class="sidebar-footer">
+                <p><i class="fa-regular fa-copyright"></i> 2026 พรมณี 24H</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="page-title-area">
+                    <h1 id="page-title">แผงควบคุม (Dashboard)</h1>
+                    <p id="page-subtitle">ระบบบริหารจัดการกองรถและบัญชีขนส่งครบวงจร</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="resetDemoData()" style="margin-right: 15px; background: rgba(220, 53, 69, 0.15); color: #ff6b6b; border: 1px solid rgba(220, 53, 69, 0.3);">
+                        <i class="fa-solid fa-arrows-rotate"></i> รีเซ็ตข้อมูล (Spreadsheet)
+                    </button>
+                    <div class="user-profile" id="header-user-profile" style="display: none;">
+                        <div class="user-avatar" id="header-user-avatar">AD</div>
+                        <div class="user-info">
+                            <span class="user-name" id="header-user-name">Admin Director</span>
+                            <span class="user-role" id="header-user-role">ผู้ดูแลระบบระดับสูง</span>
+                        </div>
+                        <button class="logout-btn" id="btn-logout" title="ออกจากระบบ" onclick="logoutUser()">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>ออก</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Panels -->
+            <div class="content-wrapper">
+                
+                <!-- 1. DASHBOARD PANEL -->
+                <section id="panel-dashboard" class="page-panel active">
+                    <!-- Quick Stats Grid -->
+                    <div class="card-grid">
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>ยอดจองทั้งหมด</h3>
+                                <div class="value" id="stat-total-bookings">0</div>
+                                <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 12% เดือนนี้</div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>งานกำลังขนส่ง</h3>
+                                <div class="value" id="stat-active-jobs">0</div>
+                                <div class="trend up"><i class="fa-solid fa-truck-moving"></i> กำลังวิ่งงาน</div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fa-solid fa-arrows-spin"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>ตั้งหนี้/รอวางบิล</h3>
+                                <div class="value" id="stat-pending-billing">฿0</div>
+                                <div class="trend"><i class="fa-solid fa-clock"></i> รอเครดิตเทอม</div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>รายได้รวมเดือนนี้</h3>
+                                <div class="value" id="stat-total-revenue">฿0</div>
+                                <div class="trend up"><i class="fa-solid fa-circle-dollar-to-slot"></i> รับเงินแล้ว</div>
+                            </div>
+                            <div class="stat-icon secondary">
+                                <i class="fa-solid fa-money-bill-trend-up"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Layout -->
+                    <div class="dashboard-layout">
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-chart-line"></i> สถิติการเงินขนส่ง (Revenue vs Expenses)</h2>
+                                </div>
+                                <div style="height: 320px; position: relative;">
+                                    <canvas id="financeChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-list-check"></i> งานขนส่งล่าสุด</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="dashboard-jobs-table">
+                                        <thead>
+                                            <tr>
+                                                <th>รหัสงาน</th>
+                                                <th>ลูกค้า</th>
+                                                <th>เส้นทาง</th>
+                                                <th>รถ/คนขับ</th>
+                                                <th>ค่าจ้าง</th>
+                                                <th>สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic content loaded via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-circle-info"></i> สถานะกองรถ (Fleet Status)</h2>
+                                </div>
+                                <div style="height: 220px; position: relative; margin-bottom: 20px;">
+                                    <canvas id="fleetStatusChart"></canvas>
+                                </div>
+                                <div class="slip-calc-details">
+                                    <div class="slip-row">
+                                        <span>รถของบริษัท (Own Trucks)</span>
+                                        <span id="fleet-own-count" style="font-weight: 600;">0 คัน</span>
+                                    </div>
+                                    <div class="slip-row">
+                                        <span>ผู้รับเหมาช่วง (Sub Contractors)</span>
+                                        <span id="fleet-sub-count" style="font-weight: 600;">0 คัน</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-bell"></i> แจ้งเตือนระบบ</h2>
+                                </div>
+                                <div class="slip-calc-details" id="notification-area" style="font-size: 13px; display: flex; flex-direction: column; gap: 10px;">
+                                    <!-- Dynamic notifications -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. BOOKING PANEL -->
+                <section id="panel-booking" class="page-panel">
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="booking-search">ค้นหาการจอง</label>
+                            <input type="text" id="booking-search" placeholder="ค้นหาโดยชื่อลูกค้า หรือรหัสการจอง...">
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-filter-status">สถานะ</label>
+                            <select id="booking-filter-status">
+                                <option value="all">ทั้งหมด</option>
+                                <option value="Pending">รอการยืนยัน (Pending)</option>
+                                <option value="Confirmed">ยืนยันแล้ว (Confirmed)</option>
+                                <option value="Cancelled">ยกเลิกแล้ว (Cancelled)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modal-add-booking')">
+                            <i class="fa-solid fa-plus"></i> สร้างใบจองใหม่
+                        </button>
+                    </div>
+
+                    <div class="premium-card">
+                        <div class="table-responsive">
+                            <table class="premium-table" id="bookings-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสจอง</th>
+                                        <th>วันที่จอง</th>
+                                        <th>เจ้าของงาน (ลูกค้า)</th>
+                                        <th>ต้น (Shipper)</th>
+                                        <th>ต้นทาง (Origin)</th>
+                                        <th>เวลา</th>
+                                        <th>ปลายทาง (Destination)</th>
+                                        <th>ประเภทรถ</th>
+                                        <th>คนขับ / ทะเบียน</th>
+                                        <th>รถร่วม / ทะเบียนร่วม</th>
+                                        <th>ค่าบริการ (บาท)</th>
+                                        <th>สถานะ</th>
+                                        <th class="text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. JOB ORDER PANEL -->
+                <section id="panel-joborder" class="page-panel">
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="job-search">ค้นหาใบงาน</label>
+                            <input type="text" id="job-search" placeholder="ค้นหาโดยรหัสใบงาน ลูกค้า หรือคนขับ...">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-filter-type">ประเภทการจัดการ</label>
+                            <select id="job-filter-type">
+                                <option value="all">ทั้งหมด</option>
+                                <option value="own">รถบริษัท (Own)</option>
+                                <option value="sub">ผู้รับเหมาช่วง (Subcontract)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="premium-card">
+                        <div class="table-responsive">
+                            <table class="premium-table" id="jobs-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสใบงาน (Job No)</th>
+                                        <th>รหัสจอง (Booking)</th>
+                                        <th>ลูกค้า</th>
+                                        <th>ประเภทรถ</th>
+                                        <th>ต้นทาง - ปลายทาง</th>
+                                        <th>ผู้รับงานขนส่ง</th>
+                                        <th>ทะเบียนรถ / คนขับ</th>
+                                        <th>ต้นทุน/ค่าจ้างผู้ขนส่ง</th>
+                                        <th>สถานะใบงาน</th>
+                                        <th class="text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. CONFIRM JOB OPEN/CLOSE PANEL -->
+                <section id="panel-jobstatus" class="page-panel">
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="confirm-job-search">ค้นหางานเพื่อตรวจสอบ</label>
+                            <input type="text" id="confirm-job-search" placeholder="ป้อนรหัสงาน ทะเบียนรถ หรือคนขับ...">
+                        </div>
+                    </div>
+
+                    <div class="premium-card">
+                        <div class="section-header">
+                            <h2><i class="fa-solid fa-hourglass-half"></i> งานที่อยู่ระหว่างการขนส่ง (Active & Completed Operations)</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="premium-table" id="confirm-jobs-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสใบงาน</th>
+                                        <th>ลูกค้า</th>
+                                        <th>เส้นทาง</th>
+                                        <th>ทะเบียนรถ / คนขับ (ผู้ขนส่ง)</th>
+                                        <th>เบี้ยเลี้ยง/เที่ยววิ่ง</th>
+                                        <th>ค่าใช้จ่ายสะสม</th>
+                                        <th>สถานะหน้างาน</th>
+                                        <th class="text-right">การยืนยันสถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. BILLING & INVOICE PANEL -->
+                <section id="panel-billing" class="page-panel">
+                    <div class="dashboard-layout">
+                        <!-- Left Panel: Job list ready for invoicing -->
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-clipboard-list"></i> รายการงานขนส่งที่ปิดแล้ว (รอตั้งด่านวางบิล)</h2>
+                                    <button class="btn btn-primary btn-sm" id="btn-create-invoice" onclick="generateInvoiceFromSelected()">
+                                        <i class="fa-solid fa-file-invoice"></i> ออกใบแจ้งหนี้/วางบิลจากงานที่เลือก
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="closed-jobs-billing-table">
+                                        <thead>
+                                            <tr>
+                                                <th width="40"><input type="checkbox" id="select-all-billing" onchange="toggleSelectAllBilling(this)"></th>
+                                                <th>รหัสใบงาน</th>
+                                                <th>วันที่ปิดงาน</th>
+                                                <th>ลูกค้า</th>
+                                                <th>เส้นทาง</th>
+                                                <th class="text-right">ค่าขนส่งเสนอ</th>
+                                                <th>สถานะวางบิล</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic Content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-file-invoice"></i> รายการใบแจ้งหนี้ / ใบวางบิลที่ออกแล้ว (Invoices)</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="invoices-table">
+                                        <thead>
+                                            <tr>
+                                                <th>เลขที่ใบแจ้งหนี้</th>
+                                                <th>ลูกค้า</th>
+                                                <th>วันที่ออกเอกสาร</th>
+                                                <th>ครบกำหนดชำระ</th>
+                                                <th class="text-right">จำนวนเงินสุทธิ</th>
+                                                <th>สถานะชำระเงิน</th>
+                                                <th class="text-right">การจัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic Content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Invoice template generator preview -->
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-eye"></i> ตัวอย่างเอกสารวางบิล (Preview)</h2>
+                                    <button class="btn btn-secondary btn-icon-only" onclick="printDoc('billing-preview-area')"><i class="fa-solid fa-print"></i></button>
+                                </div>
+                                <div id="billing-preview-area" class="doc-preview" style="display: none; color: #000;">
+                                    <!-- Dynamic layout injected by JS -->
+                                </div>
+                                <div id="billing-preview-placeholder" class="text-center" style="padding: 60px 20px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-file-invoice-dollar" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+                                    เลือกใบแจ้งหนี้จากตารางเพื่อดูตัวอย่างเอกสาร
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. RECEIPT PANEL -->
+                <section id="panel-receipt" class="page-panel">
+                    <div class="dashboard-layout">
+                        <!-- Invoice collection -->
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-dollar-sign"></i> ค้างรับชำระ / รออกใบเสร็จรับเงิน</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="unpaid-invoices-table">
+                                        <thead>
+                                            <tr>
+                                                <th>เลขที่ใบแจ้งหนี้</th>
+                                                <th>ลูกค้า</th>
+                                                <th>วันที่ครบกำหนด</th>
+                                                <th class="text-right">จำนวนเงินสุทธิ</th>
+                                                <th>บันทึกชำระเงิน</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic Content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-circle-check"></i> รายการใบเสร็จรับเงินที่ออกแล้ว (Receipts)</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="receipts-table">
+                                        <thead>
+                                            <tr>
+                                                <th>เลขที่ใบเสร็จ</th>
+                                                <th>เลขที่ใบแจ้งหนี้</th>
+                                                <th>ลูกค้า</th>
+                                                <th>วันที่รับชำระ</th>
+                                                <th class="text-right">ยอดรับชำระสุทธิ</th>
+                                                <th class="text-right">ดูเอกสาร</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic Content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Receipt preview area -->
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-eye"></i> ตัวอย่างใบเสร็จรับเงิน (Preview)</h2>
+                                    <button class="btn btn-secondary btn-icon-only" onclick="printDoc('receipt-preview-area')"><i class="fa-solid fa-print"></i></button>
+                                </div>
+                                <div id="receipt-preview-area" class="doc-preview" style="display: none; color: #000;">
+                                    <!-- Dynamic layout injected by JS -->
+                                </div>
+                                <div id="receipt-preview-placeholder" class="text-center" style="padding: 60px 20px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-receipt" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+                                    เลือกใบเสร็จรับเงินเพื่อดูตัวอย่างเอกสาร
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. DRIVER SALARY PANEL -->
+                <section id="panel-salary" class="page-panel">
+                    <div class="card-grid">
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>จำนวนพนักงานขับรถ</h3>
+                                <div class="value" id="salary-driver-count">0 คน</div>
+                                <div class="trend"><i class="fa-solid fa-id-card"></i> พนักงานขับรถประจำ</div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>เบี้ยเลี้ยงเที่ยววิ่งเดือนนี้</h3>
+                                <div class="value" id="salary-total-trip-fee">฿0</div>
+                                <div class="trend up"><i class="fa-solid fa-money-bill-1-wave"></i> จ่ายตามยอดปิดงาน</div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fa-solid fa-truck-ramp-box"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>ประมาณการเงินเดือนรวม</h3>
+                                <div class="value" id="salary-total-estimate">฿0</div>
+                                <div class="trend"><i class="fa-solid fa-calc"></i> เงินเดือน + เบี้ยเลี้ยง</div>
+                            </div>
+                            <div class="stat-icon secondary">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-layout">
+                        <!-- Driver Salary Table -->
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-wallet"></i> ตารางคำนวณเงินเดือนคนขับรถ (Own Drivers Payroll)</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="drivers-payroll-table">
+                                        <thead>
+                                            <tr>
+                                                <th>คนขับรถ</th>
+                                                <th>เงินเดือนพื้นฐาน</th>
+                                                <th>จำนวนรอบวิ่ง</th>
+                                                <th>รวมเบี้ยเลี้ยงเที่ยววิ่ง</th>
+                                                <th>หักเบิกล่วงหน้า/หนี้</th>
+                                                <th class="text-right">เงินสุทธิที่จ่าย</th>
+                                                <th>สถานะการโอน</th>
+                                                <th class="text-right font-medium">จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic payroll calculations -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver Slip View -->
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-address-card"></i> รายละเอียดสลิปเงินเดือน (Salary Slip)</h2>
+                                    <button class="btn btn-secondary btn-icon-only" onclick="printDoc('salary-slip-area')"><i class="fa-solid fa-print"></i></button>
+                                </div>
+                                <div id="salary-slip-area" class="doc-preview" style="display: none; color: #000;">
+                                    <!-- Injected salary slip -->
+                                </div>
+                                <div id="salary-slip-placeholder" class="text-center" style="padding: 60px 20px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-id-card-clip" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+                                    เลือกคนขับรถเพื่อแสดงรายละเอียดโครงสร้างสลิปเงินเดือน
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. SUBCONTRACTOR PANEL -->
+                <section id="panel-subcontractor" class="page-panel">
+                    <div class="card-grid">
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>ผู้รับเหมาช่วงที่ลงทะเบียน</h3>
+                                <div class="value" id="subcon-total-count">0 ราย</div>
+                                <div class="trend"><i class="fa-solid fa-users-gear"></i> พาร์ทเนอร์ขนส่ง</div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fa-solid fa-people-arrows"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>เที่ยววิ่งขนส่งของซับ</h3>
+                                <div class="value" id="subcon-total-jobs">0 งาน</div>
+                                <div class="trend"><i class="fa-solid fa-route"></i> เที่ยววิ่งเสร็จสิ้น</div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fa-solid fa-cubes"></i>
+                            </div>
+                        </div>
+                        <div class="premium-card stat-card">
+                            <div class="stat-info">
+                                <h3>ยอดค้างจ่ายซับคอน</h3>
+                                <div class="value" id="subcon-pending-payout">฿0</div>
+                                <div class="trend"><i class="fa-solid fa-clock"></i> รอการหัก ณ ที่จ่าย 3%</div>
+                            </div>
+                            <div class="stat-icon danger">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-layout">
+                        <!-- Subcontractor list -->
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-handshake"></i> ยอดสรุปบัญชีผู้รับเหมาช่วง (Subcontractor Payout Summary)</h2>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="subcontractors-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ผู้รับเหมาช่วง</th>
+                                                <th>เที่ยววิ่ง</th>
+                                                <th>ค่าจ้างรวมต้นทุน</th>
+                                                <th>หักภาษี ณ ที่จ่าย 3%</th>
+                                                <th class="text-right">ยอดรับสุทธิ (Net Pay)</th>
+                                                <th>สถานะจ่ายเงิน</th>
+                                                <th class="text-right">จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic subcontractor list -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subcontractor Payment Voucher -->
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card">
+                                <div class="section-header">
+                                    <h2><i class="fa-solid fa-file-invoice"></i> ใบสำคัญสั่งจ่าย (Payment Voucher)</h2>
+                                    <button class="btn btn-secondary btn-icon-only" onclick="printDoc('subcon-slip-area')"><i class="fa-solid fa-print"></i></button>
+                                </div>
+                                <div id="subcon-slip-area" class="doc-preview" style="display: none; color: #000;">
+                                    <!-- Injected payment voucher -->
+                                </div>
+                                <div id="subcon-slip-placeholder" class="text-center" style="padding: 60px 20px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-receipt" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+                                    เลือกผู้รับเหมาช่วงเพื่อแสดงใบสำคัญสั่งจ่ายและภาษีหัก ณ ที่จ่าย 3%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 9. TRUCKS MASTER PANEL -->
+                <section id="panel-trucks" class="page-panel">
+                    <div class="dashboard-layout" style="grid-template-columns: 1fr 380px; gap: 20px;">
+                        <!-- Master Truck Table -->
+                        <div class="dashboard-main">
+                            <div class="premium-card">
+                                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <h2><i class="fa-solid fa-truck"></i> รายการทะเบียนรถบรรทุกในระบบ (Truck Master List)</h2>
+                                    <button class="btn btn-primary btn-sm" onclick="openAddTruckModal()">
+                                        <i class="fa-solid fa-plus"></i> เพิ่มทะเบียนรถบรรทุก
+                                    </button>
+                                </div>
+                                <!-- Filter bar -->
+                                <div id="truck-status-summary" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+                                <div class="table-responsive">
+                                    <table class="premium-table" id="trucks-master-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ทะเบียนรถ</th>
+                                                <th>ประเภทรถ</th>
+                                                <th>สังกัด (ประเภท)</th>
+                                                <th>คนขับ / ซับคอนแทรคเตอร์</th>
+                                                <th>สถานะ</th>
+                                                <th class="text-right">จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="trucks-master-tbody">
+                                            <!-- Dynamic trucks list -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info Card -->
+                        <div class="dashboard-sidebar">
+                            <div class="premium-card" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15);">
+                                <h3 style="margin-bottom: 15px; font-weight: 700; color: var(--color-primary);">
+                                    <i class="fa-solid fa-circle-info"></i> ระบบควบคุมคุณภาพข้อมูล
+                                </h3>
+                                <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
+                                    ระบบจะบังคับใช้ข้อมูลจาก **Master Data รถบรรทุก** ในขณะสร้างใบจองคิวรถและใบสั่งงาน เพื่อป้องกัน:
+                                </p>
+                                <ul style="font-size: 13px; color: var(--text-secondary); margin-left: 20px; line-height: 1.8;">
+                                    <li>การคีย์ทะเบียนรถผิดพลาด</li>
+                                    <li>การป้อนประเภทรถ (Type) ผิดแบบสะกดคำ (เช่น 6W, 10W)</li>
+                                    <li>การจับคู่ระหว่างทะเบียนรถและประเภทคนขับที่ผิดพลาด</li>
+                                </ul>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 15px;">
+                                    * หากเป็นรถร่วมบริการภายนอกที่ยังไม่ได้ลงทะเบียน สามารถเลือก "ระบุทะเบียนเอง" ได้ทันทีในขณะทำรายการสั่งงาน
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. CUSTOMER MASTER PANEL -->
+                <section id="panel-customers" class="page-panel">
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="customer-search">ค้นหาลูกค้า</label>
+                            <input type="text" id="customer-search" placeholder="ค้นหาชื่อลูกค้า หรือเบอร์โทร...">
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modal-add-customer')">
+                            <i class="fa-solid fa-plus"></i> เพิ่มลูกค้าใหม่
+                        </button>
+                    </div>
+                    <div class="premium-card">
+                        <div class="table-responsive">
+                            <table class="premium-table" id="customers-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสลูกค้า</th>
+                                        <th>ชื่อลูกค้า / บริษัท</th>
+                                        <th>ผู้ติดต่อ</th>
+                                        <th>เบอร์โทร</th>
+                                        <th>ที่อยู่</th>
+                                        <th>เลขภาษี</th>
+                                        <th>เครดิต (วัน)</th>
+                                        <th class="text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customers-tbody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 11. DRIVER MASTER PANEL -->
+                <section id="panel-drivermaster" class="page-panel">
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="driver-master-search">ค้นหาคนขับ</label>
+                            <input type="text" id="driver-master-search" placeholder="ค้นหาชื่อคนขับ หรือใบอนุญาต...">
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('modal-add-driver')">
+                            <i class="fa-solid fa-plus"></i> เพิ่มคนขับใหม่
+                        </button>
+                    </div>
+                    <div class="premium-card">
+                        <div class="table-responsive">
+                            <table class="premium-table" id="drivers-master-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัส</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>เบอร์โทร</th>
+                                        <th>เลขใบอนุญาตขับขี่</th>
+                                        <th class="text-right">เงินเดือนพื้นฐาน</th>
+                                        <th class="text-right">เบี้ยเลี้ยง/เที่ยว</th>
+                                        <th class="text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="drivers-master-tbody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: ADD BOOKING -->
+    <div class="modal-overlay" id="modal-add-booking">
+        <div class="modal-container" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-plus"></i> เพิ่มการจองคิวรถใหม่ (Create Booking)</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-booking')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-booking" onsubmit="submitBooking(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bk-customer-select">เจ้าของงาน (Customer / Job Owner)</label>
+                            <select id="bk-customer-select" onchange="onBookingCustomerSelect(this.value)" style="width:100%;padding:10px;border-radius:var(--border-radius-sm);border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);margin-bottom:6px;">
+                                <!-- Populated by JS -->
+                            </select>
+                            <input type="text" id="bk-customer" placeholder="หรือพิมพ์ชื่อเอง (กรณีลูกค้าใหม่)" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bk-date">วันที่จอง (Booking Date)</label>
+                            <input type="date" id="bk-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bk-shipper">ต้น (Shipper)</label>
+                            <input type="text" id="bk-shipper" placeholder="เช่น AKST, ไทยฟูจิ (เว้นว่างได้)">
+                        </div>
+                        <div class="form-group">
+                            <label for="bk-origin">ต้นทาง (Origin)</label>
+                            <input type="text" id="bk-origin" placeholder="เช่น ฮาเลอร์หนองใหญ่ (เว้นว่างได้)">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bk-time">เวลา (Time)</label>
+                            <input type="text" id="bk-time" placeholder="เช่น 8.00, ค้าง 20.30">
+                        </div>
+                        <div class="form-group">
+                            <label for="bk-destination">ปลายทาง (Destination)</label>
+                            <input type="text" id="bk-destination" placeholder="เช่น TPCS, ฟงดา+รับงานกลับ" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bk-truck-type">ประเภทรถ (Truck Type)</label>
+                            <select id="bk-truck-type" required>
+                                <option value="6W">6W (หกล้อ)</option>
+                                <option value="5W">5W (ห้าล้อ)</option>
+                                <option value="4W">4W (สี่ล้อ)</option>
+                                <option value="10W">10W (สิบล้อ)</option>
+                                <option value="จัมโบ้">จัมโบ้ (Jumbo)</option>
+                                <option value="รถเทรลเลอร์ 18 ล้อ">18W (เทรลเลอร์ 18 ล้อ)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bk-price">ค่าบริการเสนอราคาลูกค้า (Sales Price - THB)</label>
+                            <input type="number" id="bk-price" placeholder="เช่น 6500" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Pre-assignment fields (Optional) -->
+                    <div style="border-top: 1px dashed var(--border-color); margin-top: 15px; padding-top: 15px;">
+                        <h4 style="margin-bottom: 10px; color: var(--color-primary); font-size: 14px;"><i class="fa-solid fa-truck-ramp-box"></i> เลือกทะเบียนรถบรรทุกจาก Master Data (ป้องกันการคีย์ผิด)</h4>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="bk-truck-select">เลือกทะเบียนรถบรรทุก (Truck Select)</label>
+                            <select id="bk-truck-select" onchange="autoFillBookingTruckDetails(this.value)" style="width: 100%; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
+                                <!-- Will be filled dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bk-driver-name">คนขับ (Driver Name)</label>
+                                <input type="text" id="bk-driver-name" placeholder="คนขับประจำรถ" readonly style="background: var(--bg-card); opacity: 0.85;">
+                            </div>
+                            <div class="form-group">
+                                <label for="bk-truck-no">ทะเบียนรถ (Truck License)</label>
+                                <input type="text" id="bk-truck-no" placeholder="เลขทะเบียนรถ" readonly style="background: var(--bg-card); opacity: 0.85;">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bk-subcon-name">รถร่วม / ซับคอน (Sub Contractor)</label>
+                                <input type="text" id="bk-subcon-name" placeholder="ชื่อผู้รับเหมาช่วง" readonly style="background: var(--bg-card); opacity: 0.85;">
+                            </div>
+                            <div class="form-group">
+                                <label for="bk-subcon-truck-no">ทะเบียนรถร่วม (Sub License)</label>
+                                <input type="text" id="bk-subcon-truck-no" placeholder="ทะเบียนรถร่วม" readonly style="background: var(--bg-card); opacity: 0.85;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-booking')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">ยืนยันการจอง</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ASSIGN JOB (CREATE JOB ORDER) -->
+    <div class="modal-overlay" id="modal-assign-job">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-truck-loading"></i> สั่งงานใบงานขนส่ง (Assign Truck & Driver)</h3>
+                <button class="modal-close" onclick="closeModal('modal-assign-job')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-assign-job" onsubmit="submitJobAssignment(event)">
+                    <input type="hidden" id="assign-booking-id">
+                    
+                    <div class="slip-calc-details" style="margin-bottom: 20px;">
+                        <h4>ข้อมูลการจอง</h4>
+                        <p><strong>รหัสจอง:</strong> <span id="assign-bk-id-text"></span></p>
+                        <p><strong>ลูกค้า:</strong> <span id="assign-bk-customer-text"></span></p>
+                        <p><strong>เส้นทาง:</strong> <span id="assign-bk-route-text"></span></p>
+                        <p><strong>ค่าบริการวางบิลลูกค้า:</strong> ฿<span id="assign-bk-price-text"></span></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assign-type">ประเภทกำลังขนส่ง (Execution Type)</label>
+                        <select id="assign-type" onchange="toggleAssignType(this.value)" required>
+                            <option value="own">ใช้รถบริษัท (Own Fleet)</option>
+                            <option value="sub">ใช้ผู้รับเหมาช่วง (Sub Contractor)</option>
+                        </select>
+                    </div>
+
+                    <!-- Options for OWN Fleet -->
+                    <div id="assign-own-fields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assign-own-truck-select">เลือกทะเบียนรถบริษัท (Own Truck)</label>
+                                <select id="assign-own-truck-select" onchange="autoFillAssignOwnTruck(this.value)">
+                                    <!-- Loaded via JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assign-driver">คนขับประจำรถ (Driver)</label>
+                                <select id="assign-driver">
+                                    <!-- Loaded via JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="assign-driver-trip-allowance">เบี้ยเลี้ยงเที่ยววิ่งคนขับ (Trip Allowance)</label>
+                                <input type="number" id="assign-driver-trip-allowance" value="1200" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options for SUB Contractor -->
+                    <div id="assign-sub-fields" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assign-subcontractor">เลือกผู้รับเหมาช่วง (Sub Contractor)</label>
+                                <select id="assign-subcontractor" onchange="filterSubTruckSelect(this.value)">
+                                    <!-- Loaded via JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assign-sub-cost">ค่าจ้างซับคอนแทรคเตอร์ (Contractor Fee - THB)</label>
+                                <input type="number" id="assign-sub-cost" placeholder="เช่น 11000" min="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assign-sub-truck-select">เลือกทะเบียนรถร่วม (Sub Truck Select)</label>
+                                <select id="assign-sub-truck-select" onchange="autoFillAssignSubTruck(this.value)">
+                                    <!-- Loaded via JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assign-sub-truck">ทะเบียนรถของซับคอนแทรคเตอร์</label>
+                                <input type="text" id="assign-sub-truck" placeholder="เลือกทะเบียนหรือป้อนเอง" readonly style="background: var(--bg-card); opacity: 0.85;">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="assign-sub-driver">ชื่อคนขับของซับคอนแทรคเตอร์</label>
+                                <input type="text" id="assign-sub-driver" placeholder="เช่น สมชาย ใจดี">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-assign-job')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-success">ออกใบสั่งงาน (Generate Job Order)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: CONFIRM / UPDATE JOB (OPEN & CLOSE JOB) -->
+    <div class="modal-overlay" id="modal-confirm-job">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-route"></i> บันทึกเปิด-ปิดงานขนส่ง (Confirm & Update Operations)</h3>
+                <button class="modal-close" onclick="closeModal('modal-confirm-job')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-confirm-job" onsubmit="submitJobStatusUpdate(event)">
+                    <input type="hidden" id="status-job-id">
+                    
+                    <div class="slip-calc-details" style="margin-bottom: 20px;">
+                        <h4>ข้อมูลใบสั่งงาน</h4>
+                        <p><strong>รหัสใบสั่งงาน:</strong> <span id="status-job-id-text"></span></p>
+                        <p><strong>ลูกค้า:</strong> <span id="status-customer-text"></span></p>
+                        <p><strong>ประเภทการวิ่ง:</strong> <span id="status-type-text"></span></p>
+                        <p><strong>รถ/ผู้ควบคุม:</strong> <span id="status-driver-text"></span></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status-update-action">การกระทำ (Action)</label>
+                        <select id="status-update-action" onchange="toggleStatusActionFields(this.value)" required>
+                            <option value="In Progress">อัปเดตความคืบหน้าขนส่ง (In Progress)</option>
+                            <option value="Completed">ปิดงานขนส่งสำเร็จ (Close Job - Completed)</option>
+                        </select>
+                    </div>
+
+                    <!-- Fields for updating progress (In Progress) -->
+                    <div id="status-progress-fields">
+                        <div class="form-group">
+                            <label for="status-current-loc">ตำแหน่งรถปัจจุบัน / สถานะล่าสุด</label>
+                            <input type="text" id="status-current-loc" placeholder="เช่น กำลังโหลดสินค้าต้นทาง หรือ เดินทางถึงวังน้อย">
+                        </div>
+                    </div>
+
+                    <!-- Fields for closing the job (Completed) -->
+                    <div id="status-close-fields" style="display: none;">
+                        <h4 style="margin: 16px 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">บันทึกค่าใช้จ่ายหน้างาน (สำหรับรถบริษัท)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="status-fuel-cost">ค่าน้ำมัน (Fuel Expense - THB)</label>
+                                <input type="number" id="status-fuel-cost" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="status-toll-cost">ค่าทางด่วน/ค่าผ่านทาง (Toll Expense - THB)</label>
+                                <input type="number" id="status-toll-cost" value="0" min="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="status-other-cost">ค่าใช้จ่ายอื่นๆ หน้างาน (Other Expense - THB)</label>
+                                <input type="number" id="status-other-cost" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="status-close-note">หมายเหตุการปิดงาน</label>
+                                <input type="text" id="status-close-note" placeholder="เช่น ส่งตู้สินค้าคืนท่าเรือเรียบร้อย เอกสารครบถ้วน">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-confirm-job')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกสถานะ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD TRUCK -->
+    <div class="modal-overlay" id="modal-add-truck">
+        <div class="modal-container" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-truck"></i> เพิ่มทะเบียนรถบรรทุก (Add Master Truck)</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-truck')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-truck" onsubmit="submitAddTruck(event)">
+                    <div class="form-group">
+                        <label for="trk-plate">ทะเบียนรถ (License Plate)</label>
+                        <input type="text" id="trk-plate" placeholder="เช่น 74-1234 กทม หรือ 70-5566 ชลบุรี" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="trk-type">ประเภทรถ (Truck Type)</label>
+                        <select id="trk-type" required>
+                            <option value="4W">รถบรรทุก 4 ล้อ (4W)</option>
+                            <option value="5W">รถบรรทุก 5 ล้อ (5W)</option>
+                            <option value="6W" selected>รถบรรทุก 6 ล้อ (6W)</option>
+                            <option value="10W">รถบรรทุก 10 ล้อ (10W)</option>
+                            <option value="18W">รถบรรทุก 18 ล้อ / เทรลเลอร์ (18W)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trk-owner-type">สังกัดรถ (Owner Type)</label>
+                        <select id="trk-owner-type" onchange="toggleAddTruckOwnerFields(this.value)" required>
+                            <option value="own">รถบริษัท (Own Truck)</option>
+                            <option value="sub">รถร่วมบริการ (Sub Contractor Truck)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Form field for company drivers -->
+                    <div class="form-group" id="trk-own-driver-group">
+                        <label for="trk-driver-select">คนขับประจำรถ (Company Driver)</label>
+                        <select id="trk-driver-select" style="width: 100%; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
+                            <!-- Injected company drivers -->
+                        </select>
+                    </div>
+                    
+                    <!-- Form field for subcontractor name -->
+                    <div class="form-group" id="trk-sub-name-group" style="display: none;">
+                        <label for="trk-sub-select">บริษัทผู้รับเหมาช่วง (Sub Contractor)</label>
+                        <select id="trk-sub-select" style="width: 100%; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);">
+                            <!-- Injected subcontractors -->
+                        </select>
+                    </div>
+
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-truck')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกรถบรรทุก</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Overlay Screen -->
+    <div id="login-screen" class="login-overlay" style="display: flex;">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-truck-fast"></i>
+                <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">บจก. พรมณี 24เอช ทรานสปอร์ต</h2>
+                <p>ระบบบริหารจัดการกองรถและบัญชีขนส่ง</p>
+            </div>
+            <form id="login-form" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="login-username" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: var(--text-secondary);">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" id="login-username" placeholder="ระบุ username (admin, dispatcher, accountant, driver)" required autocomplete="username" style="width: 100%; padding: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="login-password" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: var(--text-secondary);">รหัสผ่าน (Password)</label>
+                    <input type="password" id="login-password" placeholder="ระบุรหัสผ่าน (เดโมคือ 123)" required autocomplete="current-password" style="width: 100%; padding: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); outline: none;">
+                </div>
+                <div id="login-error-msg" class="login-error" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
+            </form>
+            <div class="demo-logins">
+                <h4>บัญชีทดสอบระบบ (Demo Accounts):</h4>
+                <ul>
+                    <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>admin</strong> / 123 <br>
+                            <span style="font-size: 10px; color: var(--text-muted);">ผู้ดูแลระบบ: เข้าได้ทุกเมนู</span>
+                        </div>
+                        <span class="badge badge-active" style="padding: 4px 8px; font-size: 10px;">Admin</span>
+                    </li>
+                    <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>dispatcher</strong> / 123 <br>
+                            <span style="font-size: 10px; color: var(--text-muted);">ฝ่ายจัดรถ: ไม่เห็นข้อมูลบัญชีและการเงิน</span>
+                        </div>
+                        <span class="badge badge-pending" style="padding: 4px 8px; font-size: 10px;">Dispatcher</span>
+                    </li>
+                    <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>accountant</strong> / 123 <br>
+                            <span style="font-size: 10px; color: var(--text-muted);">ฝ่ายบัญชี: ไม่เห็นข้อมูลจัดการรถและคนขับ</span>
+                        </div>
+                        <span class="badge badge-completed" style="padding: 4px 8px; font-size: 10px;">Accountant</span>
+                    </li>
+                    <li style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>driver</strong> / 123 <br>
+                            <span style="font-size: 10px; color: var(--text-muted);">คนขับรถ: เข้าได้เฉพาะหน้าปิดงาน/เบี้ยเลี้ยง</span>
+                        </div>
+                        <span class="badge badge-danger" style="padding: 4px 8px; font-size: 10px;">Driver</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD/EDIT CUSTOMER -->
+    <div class="modal-overlay" id="modal-add-customer">
+        <div class="modal-container" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3 id="modal-customer-title"><i class="fa-solid fa-building-user"></i> เพิ่มข้อมูลลูกค้าใหม่</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-customer')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-customer" onsubmit="submitCustomer(event)">
+                    <input type="hidden" id="cus-edit-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cus-name">ชื่อลูกค้า / บริษัท *</label>
+                            <input type="text" id="cus-name" placeholder="เช่น ฟงดา, ASAHI, PIONEER" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cus-contact">ผู้ติดต่อ</label>
+                            <input type="text" id="cus-contact" placeholder="เช่น คุณวิไล">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cus-phone">เบอร์โทร</label>
+                            <input type="text" id="cus-phone" placeholder="เช่น 038-100-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="cus-credit">เครดิตเทอม (วัน)</label>
+                            <input type="number" id="cus-credit" value="30" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cus-address">ที่อยู่</label>
+                        <input type="text" id="cus-address" placeholder="เช่น นิคมอุตสาหกรรมอมตะซิตี้ ชลบุรี">
+                    </div>
+                    <div class="form-group">
+                        <label for="cus-taxid">เลขประจำตัวผู้เสียภาษี</label>
+                        <input type="text" id="cus-taxid" placeholder="เช่น 0105560123456">
+                    </div>
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-customer')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกลูกค้า</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD/EDIT DRIVER -->
+    <div class="modal-overlay" id="modal-add-driver">
+        <div class="modal-container" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 id="modal-driver-title"><i class="fa-solid fa-id-card"></i> เพิ่มข้อมูลคนขับใหม่</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-driver')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-driver" onsubmit="submitDriver(event)">
+                    <input type="hidden" id="drv-edit-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="drv-name">ชื่อ-นามสกุล *</label>
+                            <input type="text" id="drv-name" placeholder="เช่น นายสมชาย ยศเล็ก" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="drv-phone">เบอร์โทร</label>
+                            <input type="text" id="drv-phone" placeholder="เช่น 081-234-5678">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="drv-license">เลขใบอนุญาตขับขี่</label>
+                        <input type="text" id="drv-license" placeholder="เช่น ท.4-00123/64">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="drv-salary">เงินเดือนพื้นฐาน (บาท)</label>
+                            <input type="number" id="drv-salary" value="15000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="drv-allowance">เบี้ยเลี้ยง/เที่ยววิ่ง (บาท)</label>
+                            <input type="number" id="drv-allowance" value="1200" min="0">
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-driver')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกคนขับ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script>
+        // Sidebar collapse/expand
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+        }
+
+        // Master Data group collapse
+        function toggleMasterGroup() {
+            const label = document.getElementById('masterdata-group-label');
+            const items = document.getElementById('masterdata-group-items');
+            label.classList.toggle('collapsed-group');
+            items.classList.toggle('hidden');
+            localStorage.setItem('masterGroupHidden', items.classList.contains('hidden'));
+        }
+        if (localStorage.getItem('masterGroupHidden') === 'true') {
+            document.getElementById('masterdata-group-label').classList.add('collapsed-group');
+            document.getElementById('masterdata-group-items').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
