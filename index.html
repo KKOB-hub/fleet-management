@@ -1024,6 +1024,89 @@
     </div>
 
     <!-- MODAL 3: CONFIRM / UPDATE JOB (OPEN & CLOSE JOB) -->
+    <!-- MODAL: VIEW JOB PHOTOS -->
+    <div class="modal-overlay" id="modal-view-photos" onclick="if(event.target===this)closeModal('modal-view-photos')">
+        <div class="modal-container" style="max-width:600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-images"></i> รูปภาพหลักฐาน — <span id="view-photos-job-id"></span></h3>
+                <button class="modal-close" onclick="closeModal('modal-view-photos')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="view-photos-open" style="margin-bottom:20px; display:none;">
+                    <h4 style="margin-bottom:8px; color:#4ade80;"><i class="fa-solid fa-play-circle"></i> รูปเปิดงาน</h4>
+                    <p id="view-open-note" style="font-size:12px; color:var(--text-muted); margin-bottom:8px;"></p>
+                    <img id="view-open-photo-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color);">
+                </div>
+                <div id="view-photos-close" style="display:none;">
+                    <h4 style="margin-bottom:8px; color:#ff6b6b;"><i class="fa-solid fa-flag-checkered"></i> รูปปิดงาน</h4>
+                    <p id="view-close-note" style="font-size:12px; color:var(--text-muted); margin-bottom:8px;"></p>
+                    <img id="view-close-photo-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color);">
+                </div>
+                <div id="view-photos-empty" style="text-align:center; padding:40px; color:var(--text-muted); display:none;">
+                    <i class="fa-solid fa-image" style="font-size:40px; margin-bottom:12px; display:block; opacity:0.3;"></i>
+                    ยังไม่มีรูปภาพบันทึกไว้
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: OPEN JOB -->
+    <div class="modal-overlay" id="modal-open-job">
+        <div class="modal-container" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-play-circle"></i> เปิดงานขนส่ง (Start Job)</h3>
+                <button class="modal-close" onclick="closeModal('modal-open-job')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-open-job" onsubmit="submitOpenJob(event)">
+                    <input type="hidden" id="open-job-id">
+
+                    <div class="slip-calc-details" style="margin-bottom: 20px;">
+                        <h4>ข้อมูลใบสั่งงาน</h4>
+                        <p><strong>รหัสใบสั่งงาน:</strong> <span id="open-job-id-text"></span></p>
+                        <p><strong>ลูกค้า:</strong> <span id="open-job-customer-text"></span></p>
+                        <p><strong>รถ/คนขับ:</strong> <span id="open-job-driver-text"></span></p>
+                    </div>
+
+                    <!-- ถ่ายรูป -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-camera"></i> ถ่ายรูปสินค้า/รถ (ก่อนออกเดินทาง)</label>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <label class="btn btn-secondary" style="cursor:pointer; margin:0;">
+                                <i class="fa-solid fa-camera"></i> เลือก/ถ่ายรูป
+                                <input type="file" id="open-job-photo" accept="image/*" capture="environment" style="display:none;" onchange="previewPhoto(this,'open-job-preview')">
+                            </label>
+                            <span style="font-size:12px; color:var(--text-muted);">(ไม่บังคับ)</span>
+                        </div>
+                        <div id="open-job-preview" style="margin-top:10px; display:none;">
+                            <img id="open-job-preview-img" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border-color);">
+                        </div>
+                    </div>
+
+                    <!-- เลือกข้อความ -->
+                    <div class="form-group">
+                        <label for="open-job-note-preset">สถานะสินค้าขณะรับ</label>
+                        <select id="open-job-note-preset" onchange="onOpenJobPresetChange(this.value)">
+                            <option value="บรรจุเรียบร้อย">บรรจุเรียบร้อย</option>
+                            <option value="other">อื่นๆ (ระบุเอง)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="open-job-note-custom-wrap" style="display:none;">
+                        <label for="open-job-note-custom">ระบุรายละเอียด</label>
+                        <input type="text" id="open-job-note-custom" placeholder="ระบุสถานะสินค้าหรือหมายเหตุ...">
+                    </div>
+
+                    <div class="modal-footer" style="padding-right:0; padding-bottom:0;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-open-job')">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary" style="background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);color:#4ade80;">
+                            <i class="fa-solid fa-play"></i> เริ่มงาน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-confirm-job">
         <div class="modal-container">
             <div class="modal-header">
@@ -1060,6 +1143,21 @@
 
                     <!-- Fields for closing the job (Completed) -->
                     <div id="status-close-fields" style="display: none;">
+                        <!-- ถ่ายรูปปิดงาน -->
+                        <div class="form-group" style="margin-top:12px;">
+                            <label><i class="fa-solid fa-camera"></i> ถ่ายรูปส่งสินค้า (หลักฐานปิดงาน)</label>
+                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                <label class="btn btn-secondary" style="cursor:pointer; margin:0;">
+                                    <i class="fa-solid fa-camera"></i> เลือก/ถ่ายรูป
+                                    <input type="file" id="close-job-photo" accept="image/*" capture="environment" style="display:none;" onchange="previewPhoto(this,'close-job-preview')">
+                                </label>
+                                <span style="font-size:12px; color:var(--text-muted);">(ไม่บังคับ)</span>
+                            </div>
+                            <div id="close-job-preview" style="margin-top:10px; display:none;">
+                                <img id="close-job-preview-img" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border-color);">
+                            </div>
+                        </div>
+
                         <h4 style="margin: 16px 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">บันทึกค่าใช้จ่ายหน้างาน (สำหรับรถบริษัท)</h4>
                         <div class="form-row">
                             <div class="form-group">
@@ -1078,7 +1176,15 @@
                             </div>
                             <div class="form-group">
                                 <label for="status-close-note">หมายเหตุการปิดงาน</label>
-                                <input type="text" id="status-close-note" placeholder="เช่น ส่งตู้สินค้าคืนท่าเรือเรียบร้อย เอกสารครบถ้วน">
+                                <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-sm" style="background:rgba(16,185,129,0.15);color:#4ade80;border:1px solid rgba(16,185,129,0.3);" onclick="setCloseNote('ส่งสมบูรณ์ เอกสารครบถ้วน')">
+                                        <i class="fa-solid fa-circle-check"></i> ส่งสมบูรณ์
+                                    </button>
+                                    <button type="button" class="btn btn-sm" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);" onclick="setCloseNote('ส่งสมบูรณ์ รอเอกสารตีกลับ')">
+                                        <i class="fa-solid fa-file-circle-xmark"></i> รอเอกสารตีกลับ
+                                    </button>
+                                </div>
+                                <input type="text" id="status-close-note" placeholder="เช่น ส่งสมบูรณ์ เอกสารครบถ้วน">
                             </div>
                         </div>
                     </div>

@@ -1336,20 +1336,36 @@ function renderJobStatusConfirmations() {
             statusBadge = `<span class="badge badge-completed"><span class="badge-dot"></span>เสร็จสิ้น (Closed)</span>`;
         }
 
+        const hasPhoto = job.openPhoto || job.closePhoto;
+        const photoBtn = hasPhoto
+            ? `<button class="btn btn-sm" style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);" onclick="viewJobPhotos('${job.id}')"><i class="fa-solid fa-images"></i></button>`
+            : "";
+
         if (job.status === "Assigned") {
             actionButtons = `
-                <button class="btn btn-sm" style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);" onclick="openJobDirect('${job.id}')">
-                    <i class="fa-solid fa-play"></i> เปิดงาน
-                </button>
+                <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+                    ${photoBtn}
+                    <button class="btn btn-sm" style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);" onclick="openJobDirect('${job.id}')">
+                        <i class="fa-solid fa-play"></i> เปิดงาน
+                    </button>
+                </div>
             `;
         } else if (job.status === "In Progress") {
             actionButtons = `
-                <button class="btn btn-sm" style="background:rgba(220,53,69,0.15);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);" onclick="openCloseJobModal('${job.id}')">
-                    <i class="fa-solid fa-flag-checkered"></i> ปิดงาน
-                </button>
+                <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+                    ${photoBtn}
+                    <button class="btn btn-sm" style="background:rgba(220,53,69,0.15);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);" onclick="openCloseJobModal('${job.id}')">
+                        <i class="fa-solid fa-flag-checkered"></i> ปิดงาน
+                    </button>
+                </div>
             `;
         } else {
-            actionButtons = `<span style="font-weight:500;font-size:12px;color:var(--color-completed);"><i class="fa-solid fa-circle-check"></i> ตรวจสอบแล้ว</span>`;
+            actionButtons = `
+                <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+                    ${photoBtn}
+                    <span style="font-weight:500;font-size:12px;color:var(--color-completed);"><i class="fa-solid fa-circle-check"></i> ตรวจสอบแล้ว</span>
+                </div>
+            `;
         }
 
         tbody.innerHTML += `
@@ -1401,12 +1417,118 @@ function openConfirmJobModal(jobId) {
 function openJobDirect(jobId) {
     const job = state.jobs.find(j => j.id === jobId);
     if (!job) return;
-    if (!confirm(`ยืนยันเปิดงาน ${jobId} — เริ่มขนส่งแล้ว?`)) return;
+
+    document.getElementById("open-job-id").value = jobId;
+    document.getElementById("open-job-id-text").innerText = job.id;
+    document.getElementById("open-job-customer-text").innerText = job.customer;
+    document.getElementById("open-job-driver-text").innerText = `${job.driverName} (${job.truckNo})`;
+
+    // reset form
+    document.getElementById("open-job-photo").value = "";
+    document.getElementById("open-job-preview").style.display = "none";
+    document.getElementById("open-job-note-preset").value = "บรรจุเรียบร้อย";
+    document.getElementById("open-job-note-custom-wrap").style.display = "none";
+    document.getElementById("open-job-note-custom").value = "";
+
+    openModal("modal-open-job");
+}
+
+function onOpenJobPresetChange(val) {
+    document.getElementById("open-job-note-custom-wrap").style.display = val === "other" ? "block" : "none";
+}
+
+function submitOpenJob(event) {
+    event.preventDefault();
+    const jobId = document.getElementById("open-job-id").value;
+    const job = state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const preset = document.getElementById("open-job-note-preset").value;
+    const note = preset === "other"
+        ? (document.getElementById("open-job-note-custom").value || "อื่นๆ")
+        : preset;
+
     job.status = "In Progress";
     job.lastLocation = "เริ่มออกปฏิบัติงาน";
+    job.openNote = note;
+
+    // save compressed photo if provided
+    const photoInput = document.getElementById("open-job-photo");
+    if (photoInput._compressedData) {
+        job.openPhoto = photoInput._compressedData;
+        photoInput._compressedData = null;
+    }
     saveStateToStorage();
+
+    closeModal("modal-open-job");
     renderJobStatusConfirmations();
     updateDashboardStats();
+}
+
+function previewPhoto(input, previewId) {
+    const wrap = document.getElementById(previewId);
+    const img = document.getElementById(previewId + "-img");
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+        const original = new Image();
+        original.onload = () => {
+            // resize to max 1024px wide, compress to 0.7 quality JPEG
+            const MAX = 1024;
+            let w = original.width;
+            let h = original.height;
+            if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(original, 0, 0, w, h);
+
+            const compressed = canvas.toDataURL("image/jpeg", 0.7);
+            img.src = compressed;
+            wrap.style.display = "block";
+
+            // store compressed on input element for submitOpenJob / submitJobStatusUpdate to read
+            input._compressedData = compressed;
+        };
+        original.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function setCloseNote(text) {
+    document.getElementById("status-close-note").value = text;
+}
+
+function viewJobPhotos(jobId) {
+    const job = state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    document.getElementById("view-photos-job-id").innerText = job.id;
+
+    const hasOpen = !!job.openPhoto;
+    const hasClose = !!job.closePhoto;
+    const hasAny = hasOpen || hasClose;
+
+    document.getElementById("view-photos-empty").style.display = hasAny ? "none" : "block";
+
+    const openWrap = document.getElementById("view-photos-open");
+    openWrap.style.display = hasOpen ? "block" : "none";
+    if (hasOpen) {
+        document.getElementById("view-open-photo-img").src = job.openPhoto;
+        document.getElementById("view-open-note").innerText = job.openNote ? `หมายเหตุ: ${job.openNote}` : "";
+    }
+
+    const closeWrap = document.getElementById("view-photos-close");
+    closeWrap.style.display = hasClose ? "block" : "none";
+    if (hasClose) {
+        document.getElementById("view-close-photo-img").src = job.closePhoto;
+        document.getElementById("view-close-note").innerText = job.closeNote ? `หมายเหตุ: ${job.closeNote}` : "";
+    }
+
+    openModal("modal-view-photos");
 }
 
 function openCloseJobModal(jobId) {
@@ -1466,13 +1588,22 @@ function submitJobStatusUpdate(event) {
         job.lastLocation = document.getElementById("status-current-loc").value;
     } else {
         job.status = "Completed";
-        job.closeNote = document.getElementById("status-close-note").value;
+        job.closeNote = document.getElementById("status-close-note").value || "ส่งสมบูรณ์";
         job.lastLocation = "ถึงปลายทางและส่งมอบสินค้าเรียบร้อย (Closed)";
 
         if (job.type === "own") {
             job.fuelExpense = parseFloat(document.getElementById("status-fuel-cost").value) || 0;
             job.tollExpense = parseFloat(document.getElementById("status-toll-cost").value) || 0;
             job.otherExpense = parseFloat(document.getElementById("status-other-cost").value) || 0;
+        }
+
+        // save compressed close photo
+        const closePhotoInput = document.getElementById("close-job-photo");
+        if (closePhotoInput && closePhotoInput._compressedData) {
+            job.closePhoto = closePhotoInput._compressedData;
+            closePhotoInput._compressedData = null;
+            closePhotoInput.value = "";
+            document.getElementById("close-job-preview").style.display = "none";
         }
     }
 
