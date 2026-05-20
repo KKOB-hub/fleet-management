@@ -1,0 +1,9 @@
+ผม restart ผ่าน PowerShell tool ใน background ครับ — ใช้คำสั่ง:
+
+
+taskkill /F /IM python.exe
+แล้ว:
+
+
+Start-Process python -ArgumentList "server.py" -WindowStyle Hidden
+-WindowStyle Hidden ทำให้ไม่มี command window โผล่ — server รันอยู่เบื้องหลัง

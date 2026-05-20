@@ -3,6 +3,8 @@ import socketserver
 import json
 import sqlite3
 import os
+from datetime import datetime
+from urllib.parse import urlparse, parse_qs
 
 PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "fleet_management.db"
@@ -155,6 +157,19 @@ def init_db():
         note TEXT
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sequence_control (
+        prefix       TEXT PRIMARY KEY,
+        year         INTEGER,
+        last_seq     INTEGER,
+        reset_policy TEXT
+    )
+    """)
+    # Seed sequence rows if not exist
+    for prefix, policy in [("BK", "yearly"), ("JOB", "yearly"), ("INV", "monthly"), ("RCT", "monthly")]:
+        cursor.execute("INSERT OR IGNORE INTO sequence_control VALUES (?,?,?,?)",
+                       (prefix, datetime.now().year, 0, policy))
     
     # Migrate: seed customers/drivers if tables are empty
     cursor.execute("SELECT COUNT(*) FROM customers")
@@ -262,6 +277,38 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+def get_next_number(prefix):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    now = datetime.now()
+    cur_year = now.year
+    cur_month = now.month
+    try:
+        cur.execute("SELECT year, last_seq, reset_policy FROM sequence_control WHERE prefix=?", (prefix,))
+        row = cur.fetchone()
+        if row is None:
+            next_seq = 1
+            cur.execute("INSERT INTO sequence_control VALUES (?,?,?,?)", (prefix, cur_year, 1, "yearly"))
+        else:
+            saved_year, last_seq, reset_policy = row
+            if reset_policy == "yearly" and saved_year < cur_year:
+                next_seq = 1
+                cur.execute("UPDATE sequence_control SET year=?, last_seq=1 WHERE prefix=?", (cur_year, prefix))
+            else:
+                next_seq = last_seq + 1
+                cur.execute("UPDATE sequence_control SET last_seq=? WHERE prefix=?", (next_seq, prefix))
+        conn.commit()
+        yy = str(cur_year)[2:]
+        mm = f"{cur_month:02d}"
+        if prefix in ("INV", "RCT"):
+            result = f"{prefix}-{yy}{mm}{next_seq:03d}"
+        else:
+            result = f"{prefix}-{yy}{mm}-{next_seq:03d}"
+        return result
+    finally:
+        conn.close()
+
 
 def get_state():
     conn = sqlite3.connect(DB_FILE)
@@ -482,7 +529,22 @@ def save_state(state):
 
 class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/api/state":
+        parsed = urlparse(self.path)
+        qs = parse_qs(parsed.query)
+        if parsed.path == "/api/next-number":
+            prefix = qs.get("prefix", [None])[0]
+            if not prefix or prefix not in ("BK", "JOB", "INV", "RCT"):
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"Invalid prefix")
+                return
+            result = get_next_number(prefix)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"id": result}).encode("utf-8"))
+        elif self.path == "/api/state":
             try:
                 state_data = get_state()
                 self.send_response(200)

@@ -1,4 +1,12 @@
 // State Management for Fleet Management Web App
+
+async function fetchNextNumber(prefix) {
+    var res = await fetch("/api/next-number?prefix=" + prefix);
+    if (!res.ok) throw new Error("fetchNextNumber failed: " + prefix);
+    var data = await res.json();
+    return data.id;
+}
+
 // User Database and RBAC Roles
 const usersDb = [
     { username: "admin", name: "ผู้ดูแลระบบ", role: "admin", password: "123", avatar: "AD" },
@@ -1189,7 +1197,7 @@ function onBookingRouteSelect(routeId) {
     document.getElementById("bk-price").value = r.price;
 }
 
-function submitBooking(event) {
+async function submitBooking(event) {
     event.preventDefault();
     const customer = document.getElementById("bk-customer").value;
     const date = document.getElementById("bk-date").value;
@@ -1206,12 +1214,7 @@ function submitBooking(event) {
     const subconName = document.getElementById("bk-subcon-name").value;
     const subconTruckNo = document.getElementById("bk-subcon-truck-no").value;
 
-    const maxBkIdNum = state.bookings.reduce((max, b) => {
-        const matches = b.id.match(/\d+/);
-        const idNum = matches ? parseInt(matches[0]) : 0;
-        return idNum > max ? idNum : max;
-    }, 0);
-    const bookingId = `BK-${String(maxBkIdNum + 1).padStart(3, "0")}`;
+    const bookingId = await fetchNextNumber("BK");
 
     const isPreAssigned = (driverName || subconName);
     const status = isPreAssigned ? "Confirmed" : "Pending";
@@ -1259,12 +1262,7 @@ function submitBooking(event) {
 
     // If pre-assigned, automatically spawn a Job Order!
     if (isPreAssigned) {
-        const maxJobIdNum = state.jobs.reduce((max, j) => {
-            const matches = j.id.match(/\d+/);
-            const idNum = matches ? parseInt(matches[0]) : 0;
-            return idNum > max ? idNum : max;
-        }, 0);
-        const jobId = `JOB-${String(maxJobIdNum + 1).padStart(3, "0")}`;
+        const jobId = await fetchNextNumber("JOB");
 
         const isSub = !!subconName;
         
@@ -1622,7 +1620,7 @@ function toggleAssignType(type) {
     }
 }
 
-function submitJobAssignment(event) {
+async function submitJobAssignment(event) {
     event.preventDefault();
     const bookingId = document.getElementById("assign-booking-id").value;
     const type = document.getElementById("assign-type").value;
@@ -1630,12 +1628,7 @@ function submitJobAssignment(event) {
 
     if (!booking) return;
 
-    const maxJobIdNum = state.jobs.reduce((max, j) => {
-        const matches = j.id.match(/\d+/);
-        const idNum = matches ? parseInt(matches[0]) : 0;
-        return idNum > max ? idNum : max;
-    }, 0);
-    const jobId = `JOB-${String(maxJobIdNum + 1).padStart(3, "0")}`;
+    const jobId = await fetchNextNumber("JOB");
     let jobData = {
         id: jobId,
         bookingId: bookingId,
@@ -2093,7 +2086,7 @@ function toggleSelectAllBilling(master) {
     });
 }
 
-function generateInvoiceFromSelected() {
+async function generateInvoiceFromSelected() {
     const checkboxes = document.querySelectorAll(".billing-checkbox:checked");
     if (checkboxes.length === 0) {
         alert("กรุณาเลือกงานขนส่งที่ปิดแล้วอย่างน้อย 1 รายการเพื่อออกใบแจ้งหนี้");
@@ -2144,13 +2137,7 @@ function generateInvoiceFromSelected() {
     const withholding = subtotal * 0.01; // Withholding Tax 1%
     const total = subtotal + vat - withholding; // Grand Total
 
-    const maxInvIdNum = state.invoices.reduce((max, inv) => {
-        const matches = inv.id.match(/\d+/);
-        const idNum = matches ? parseInt(matches[0]) : 0;
-        return idNum > max ? idNum : max;
-    }, 0);
-    const nextInvIdNum = maxInvIdNum > 0 ? maxInvIdNum + 1 : 2605001;
-    const invoiceId = `INV-${nextInvIdNum}`;
+    const invoiceId = await fetchNextNumber("INV");
     const today = new Date().toISOString().split('T')[0];
     
     // Due date = 30 days credit term
@@ -2354,7 +2341,7 @@ function renderReceiptPage() {
     }
 }
 
-function payInvoice(invoiceId) {
+async function payInvoice(invoiceId) {
     const invoice = state.invoices.find(i => i.id === invoiceId);
     if (!invoice) return;
 
@@ -2362,13 +2349,7 @@ function payInvoice(invoiceId) {
         // Update Invoice status to Paid
         invoice.status = "Paid";
 
-        const maxRctIdNum = state.receipts.reduce((max, rct) => {
-            const matches = rct.id.match(/\d+/);
-            const idNum = matches ? parseInt(matches[0]) : 0;
-            return idNum > max ? idNum : max;
-        }, 0);
-        const nextRctIdNum = maxRctIdNum > 0 ? maxRctIdNum + 1 : 2605001;
-        const receiptId = `RCT-${nextRctIdNum}`;
+        const receiptId = await fetchNextNumber("RCT");
         const today = new Date().toISOString().split('T')[0];
 
         const newReceipt = {
