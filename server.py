@@ -4,7 +4,7 @@ import json
 import sqlite3
 import os
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "fleet_management.db"
 
 def init_db():
