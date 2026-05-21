@@ -383,15 +383,8 @@ def save_state(state):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     try:
-        # Clear existing tables
-        cursor.execute("DELETE FROM bookings")
-        cursor.execute("DELETE FROM jobs")
-        cursor.execute("DELETE FROM invoices")
-        cursor.execute("DELETE FROM invoice_items")
-        cursor.execute("DELETE FROM receipts")
-        
         try:
-            cursor.execute("DELETE FROM trucks")
+            pass  # no pre-delete; use INSERT OR REPLACE to preserve existing data
         except Exception:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS trucks (
@@ -406,7 +399,7 @@ def save_state(state):
         # Insert Bookings
         for bk in state.get("bookings", []):
             cursor.execute("""
-            INSERT INTO bookings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO bookings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 bk.get("id"), bk.get("customer"), bk.get("date"), bk.get("cargo"),
                 bk.get("shipper"), bk.get("origin"), bk.get("time"), bk.get("destination"),
@@ -417,7 +410,7 @@ def save_state(state):
         # Insert Jobs
         for job in state.get("jobs", []):
             cursor.execute("""
-            INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 job.get("id"), job.get("bookingId"), job.get("customer"),
                 job.get("origin"), job.get("destination"), job.get("type"),
@@ -432,7 +425,7 @@ def save_state(state):
         # Insert Invoices
         for inv in state.get("invoices", []):
             cursor.execute("""
-            INSERT INTO invoices VALUES (?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO invoices VALUES (?,?,?,?,?,?,?,?,?)
             """, (
                 inv.get("id"), inv.get("customer"), inv.get("date"), inv.get("dueDate"),
                 inv.get("subtotal"), inv.get("vat"), inv.get("withholding"), inv.get("total"),
@@ -441,6 +434,7 @@ def save_state(state):
             booking_ids = inv.get("bookingIds", [])
             job_ids = inv.get("jobIds", [])
             max_len = max(len(booking_ids), len(job_ids))
+            cursor.execute("DELETE FROM invoice_items WHERE invoiceId=?", (inv.get("id"),))
             for i in range(max_len):
                 b_id = booking_ids[i] if i < len(booking_ids) else ""
                 j_id = job_ids[i] if i < len(job_ids) else ""
@@ -451,7 +445,7 @@ def save_state(state):
         # Insert Receipts
         for rct in state.get("receipts", []):
             cursor.execute("""
-            INSERT INTO receipts VALUES (?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO receipts VALUES (?,?,?,?,?,?,?,?,?)
             """, (
                 rct.get("id"), rct.get("invoiceId"), rct.get("customer"), rct.get("date"),
                 rct.get("subtotal"), rct.get("vat"), rct.get("withholding"), rct.get("total"),
@@ -461,7 +455,7 @@ def save_state(state):
         # Insert Trucks
         for trk in state.get("trucks", []):
             cursor.execute("""
-            INSERT INTO trucks VALUES (?,?,?,?,?,?)
+            INSERT OR REPLACE INTO trucks VALUES (?,?,?,?,?,?)
             """, (
                 trk.get("plateNo"), trk.get("type"), trk.get("ownerType"),
                 trk.get("driverName"), trk.get("subconName"),
@@ -470,7 +464,7 @@ def save_state(state):
 
         # Insert Customers
         try:
-            cursor.execute("DELETE FROM customers")
+            pass  # preserve existing; INSERT OR REPLACE handles updates
         except Exception:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS customers (
@@ -479,7 +473,7 @@ def save_state(state):
             )
             """)
         for cus in state.get("customers", []):
-            cursor.execute("INSERT INTO customers VALUES (?,?,?,?,?,?,?)", (
+            cursor.execute("INSERT OR REPLACE INTO customers VALUES (?,?,?,?,?,?,?)", (
                 cus.get("id"), cus.get("name"), cus.get("contact"),
                 cus.get("phone"), cus.get("address"), cus.get("taxId"),
                 cus.get("creditDays")
@@ -487,7 +481,7 @@ def save_state(state):
 
         # Insert Drivers
         try:
-            cursor.execute("DELETE FROM drivers")
+            pass  # preserve existing; INSERT OR REPLACE handles updates
         except Exception:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS drivers (
@@ -496,14 +490,14 @@ def save_state(state):
             )
             """)
         for drv in state.get("drivers", []):
-            cursor.execute("INSERT INTO drivers VALUES (?,?,?,?,?,?)", (
+            cursor.execute("INSERT OR REPLACE INTO drivers VALUES (?,?,?,?,?,?)", (
                 drv.get("id"), drv.get("name"), drv.get("phone"),
                 drv.get("license"), drv.get("baseSalary"), drv.get("tripAllowanceRate")
             ))
 
         # Insert Route Masters
         try:
-            cursor.execute("DELETE FROM route_masters")
+            pass  # preserve existing; INSERT OR REPLACE handles updates
         except Exception:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS route_masters (
@@ -512,7 +506,7 @@ def save_state(state):
             )
             """)
         for rm in state.get("routeMasters", []):
-            cursor.execute("INSERT INTO route_masters VALUES (?,?,?,?,?,?,?,?)", (
+            cursor.execute("INSERT OR REPLACE INTO route_masters VALUES (?,?,?,?,?,?,?,?)", (
                 rm.get("id"), rm.get("customer"), rm.get("shipper", ""),
                 rm.get("origin", ""), rm.get("destination"), rm.get("truckType"),
                 rm.get("price"), rm.get("note", "")

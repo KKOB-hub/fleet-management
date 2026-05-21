@@ -33,6 +33,10 @@ let state = {
     drivers: [],
     customers: [],
     routeMasters: [],
+    routeSort: { field: "customer", dir: 1 },
+    bookingSort: { field: "date", dir: -1 },
+    jobSort: { field: "id", dir: -1 },
+    confirmSort: { field: "id", dir: -1 },
     subcontractors: [
         { id: "sub-001", name: "บจก. ทีเค ทรานสปอร์ต (WWH)", contact: "คุณทวีเกียรติ", phone: "038-111-222", taxId: "0105560123456" },
         { id: "sub-002", name: "บจก. มังกรทอง ขนส่ง", contact: "คุณสุรชัย", phone: "038-333-444", taxId: "0205562098765" },
@@ -193,6 +197,10 @@ function loadFromLocalStorage() {
     if (localStorage.getItem("fleet_pro_state")) {
         const savedState = JSON.parse(localStorage.getItem("fleet_pro_state"));
         state = { ...state, ...savedState };
+        state.routeSort = { field: "customer", dir: 1 };
+        state.bookingSort = { field: "date", dir: -1 };
+        state.jobSort = { field: "id", dir: -1 };
+        state.confirmSort = { field: "id", dir: -1 };
         state.bookings = state.bookings.map(b => ({ ...b, truckType: b.truckType || "6W" }));
         state.routeMasters = state.routeMasters || [];
     } else {
@@ -776,17 +784,55 @@ function deleteDriver(id) {
 // -----------------------------------------
 // 12. ROUTE MASTER CONTROLLER
 // -----------------------------------------
+function sortRouteBy(field) {
+    if (state.routeSort.field === field) {
+        state.routeSort.dir *= -1;
+    } else {
+        state.routeSort = { field, dir: 1 };
+    }
+    renderRouteMasters();
+}
+
+function _routeSortIcon(field) {
+    if (state.routeSort.field !== field) return `<i class="fa-solid fa-sort" style="opacity:0.3;margin-left:4px;font-size:10px;"></i>`;
+    return state.routeSort.dir === 1
+        ? `<i class="fa-solid fa-sort-up" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`
+        : `<i class="fa-solid fa-sort-down" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`;
+}
+
 function renderRouteMasters() {
     const tbody = document.getElementById("route-masters-tbody");
     if (!tbody) return;
+
+    // update sortable headers
+    const thMap = {
+        customer: "th-route-customer",
+        shipper: "th-route-shipper",
+        origin: "th-route-origin",
+        destination: "th-route-destination",
+        truckType: "th-route-trucktype"
+    };
+    Object.entries(thMap).forEach(([f, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = el.dataset.label + _routeSortIcon(f);
+    });
+
     const search = (document.getElementById("route-master-search")?.value || "").toLowerCase();
     const filterCus = document.getElementById("route-master-filter-customer")?.value || "";
-    const filtered = state.routeMasters.filter(r =>
+    let filtered = state.routeMasters.filter(r =>
         (!filterCus || r.customer === filterCus) &&
         (r.customer.toLowerCase().includes(search) ||
          (r.destination || "").toLowerCase().includes(search) ||
          (r.origin || "").toLowerCase().includes(search))
     );
+
+    const { field, dir } = state.routeSort;
+    filtered = filtered.slice().sort((a, b) => {
+        const av = (a[field] || "").toString().toLowerCase();
+        const bv = (b[field] || "").toString().toLowerCase();
+        return av < bv ? -dir : av > bv ? dir : 0;
+    });
+
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--text-muted);">ไม่มีข้อมูลเส้นทางในระบบ — กด "เพิ่มเส้นทางใหม่" หรือสร้าง Booking แล้วเลือกบันทึกลง Master</td></tr>`;
         return;
@@ -1086,20 +1132,53 @@ function getJobStatusBadge(status) {
 // -----------------------------------------
 // 2. BOOKING CONTROLLER
 // -----------------------------------------
+function sortBookingBy(field) {
+    if (state.bookingSort.field === field) {
+        state.bookingSort.dir *= -1;
+    } else {
+        state.bookingSort = { field, dir: 1 };
+    }
+    renderBookings();
+}
+
+function _bookingSortIcon(field) {
+    if (state.bookingSort.field !== field) return `<i class="fa-solid fa-sort" style="opacity:0.3;margin-left:4px;font-size:10px;"></i>`;
+    return state.bookingSort.dir === 1
+        ? `<i class="fa-solid fa-sort-up" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`
+        : `<i class="fa-solid fa-sort-down" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`;
+}
+
 function renderBookings() {
     const tbody = document.getElementById("bookings-table").querySelector("tbody");
     tbody.innerHTML = "";
 
+    // update sortable headers
+    const thMap = {
+        date: "th-bk-date", customer: "th-bk-customer", shipper: "th-bk-shipper",
+        origin: "th-bk-origin", destination: "th-bk-destination", truckType: "th-bk-trucktype"
+    };
+    Object.entries(thMap).forEach(([f, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = el.dataset.label + _bookingSortIcon(f);
+    });
+
     const searchQuery = document.getElementById("booking-search").value.toLowerCase();
     const filterStatus = document.getElementById("booking-filter-status").value;
 
-    const filteredBookings = state.bookings.filter(bk => {
-        const matchesSearch = bk.customer.toLowerCase().includes(searchQuery) || 
+    let filteredBookings = state.bookings.filter(bk => {
+        const matchesSearch = bk.customer.toLowerCase().includes(searchQuery) ||
                               bk.id.toLowerCase().includes(searchQuery) ||
                               (bk.driverName && bk.driverName.toLowerCase().includes(searchQuery)) ||
                               (bk.subconName && bk.subconName.toLowerCase().includes(searchQuery));
         const matchesStatus = filterStatus === "all" || bk.status === filterStatus;
         return matchesSearch && matchesStatus;
+    });
+
+    const { field, dir } = state.bookingSort;
+    filteredBookings = filteredBookings.slice().sort((a, b) => {
+        const av = (a[field] || "").toString().toLowerCase();
+        const bv = (b[field] || "").toString().toLowerCase();
+        return av < bv ? -dir : av > bv ? dir : 0;
     });
 
     if (filteredBookings.length === 0) {
@@ -1329,15 +1408,40 @@ function cancelBooking(id) {
 // -----------------------------------------
 // 3. JOB ORDER CONTROLLER
 // -----------------------------------------
+function sortJobBy(field) {
+    if (state.jobSort.field === field) {
+        state.jobSort.dir *= -1;
+    } else {
+        state.jobSort = { field, dir: 1 };
+    }
+    renderJobs();
+}
+
+function _jobSortIcon(field) {
+    if (state.jobSort.field !== field) return `<i class="fa-solid fa-sort" style="opacity:0.3;margin-left:4px;font-size:10px;"></i>`;
+    return state.jobSort.dir === 1
+        ? `<i class="fa-solid fa-sort-up" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`
+        : `<i class="fa-solid fa-sort-down" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`;
+}
+
 function renderJobs() {
     const tbody = document.getElementById("jobs-table").querySelector("tbody");
     tbody.innerHTML = "";
+
+    const thMap = {
+        id: "th-job-id", customer: "th-job-customer",
+        truckType: "th-job-trucktype", route: "th-job-route", status: "th-job-status"
+    };
+    Object.entries(thMap).forEach(([f, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = el.dataset.label + _jobSortIcon(f);
+    });
 
     const searchQuery = document.getElementById("job-search").value.toLowerCase();
     const filterType = document.getElementById("job-filter-type").value;
     const filterStatus = document.getElementById("job-filter-status").value;
 
-    const filteredJobs = state.jobs.filter(job => {
+    let filteredJobs = state.jobs.filter(job => {
         const matchesSearch = job.customer.toLowerCase().includes(searchQuery) ||
                               job.id.toLowerCase().includes(searchQuery) ||
                               job.driverName.toLowerCase().includes(searchQuery) ||
@@ -1345,6 +1449,24 @@ function renderJobs() {
         const matchesType = filterType === "all" || job.type === filterType;
         const matchesStatus = filterStatus === "all" || job.status === filterStatus;
         return matchesSearch && matchesType && matchesStatus;
+    });
+
+    const { field, dir } = state.jobSort;
+    filteredJobs = filteredJobs.slice().sort((a, b) => {
+        let av, bv;
+        if (field === "truckType") {
+            const bkA = state.bookings.find(bk => bk.id === a.bookingId);
+            const bkB = state.bookings.find(bk => bk.id === b.bookingId);
+            av = (bkA?.truckType || "").toLowerCase();
+            bv = (bkB?.truckType || "").toLowerCase();
+        } else if (field === "route") {
+            av = ((a.origin || "") + (a.destination || "")).toLowerCase();
+            bv = ((b.origin || "") + (b.destination || "")).toLowerCase();
+        } else {
+            av = (a[field] || "").toString().toLowerCase();
+            bv = (b[field] || "").toString().toLowerCase();
+        }
+        return av < bv ? -dir : av > bv ? dir : 0;
     });
 
     if (filteredJobs.length === 0) {
@@ -1698,20 +1820,52 @@ async function submitJobAssignment(event) {
 // -----------------------------------------
 // 4. OPERATION / STATUS CONFIRMATION CONTROLLER
 // -----------------------------------------
+function sortConfirmBy(field) {
+    if (state.confirmSort.field === field) {
+        state.confirmSort.dir *= -1;
+    } else {
+        state.confirmSort = { field, dir: 1 };
+    }
+    renderJobStatusConfirmations();
+}
+
+function _confirmSortIcon(field) {
+    if (state.confirmSort.field !== field) return `<i class="fa-solid fa-sort" style="opacity:0.3;margin-left:4px;font-size:10px;"></i>`;
+    return state.confirmSort.dir === 1
+        ? `<i class="fa-solid fa-sort-up" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`
+        : `<i class="fa-solid fa-sort-down" style="margin-left:4px;font-size:10px;color:var(--color-primary);"></i>`;
+}
+
 function renderJobStatusConfirmations() {
     const tbody = document.getElementById("confirm-jobs-table").querySelector("tbody");
     tbody.innerHTML = "";
 
+    const thMap = {
+        id: "th-cj-id", customer: "th-cj-customer",
+        driverName: "th-cj-driver", status: "th-cj-status"
+    };
+    Object.entries(thMap).forEach(([f, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = el.dataset.label + _confirmSortIcon(f);
+    });
+
     const searchQuery = document.getElementById("confirm-job-search").value.toLowerCase();
     const filterStatus = document.getElementById("confirm-job-filter-status").value;
 
-    const filteredJobs = state.jobs.filter(job => {
+    let filteredJobs = state.jobs.filter(job => {
         const matchesSearch = job.id.toLowerCase().includes(searchQuery) ||
                job.customer.toLowerCase().includes(searchQuery) ||
                job.driverName.toLowerCase().includes(searchQuery) ||
                job.truckNo.toLowerCase().includes(searchQuery);
         const matchesStatus = filterStatus === "all" || job.status === filterStatus;
         return matchesSearch && matchesStatus;
+    });
+
+    const { field, dir } = state.confirmSort;
+    filteredJobs = filteredJobs.slice().sort((a, b) => {
+        const av = (a[field] || "").toString().toLowerCase();
+        const bv = (b[field] || "").toString().toLowerCase();
+        return av < bv ? -dir : av > bv ? dir : 0;
     });
 
     if (filteredJobs.length === 0) {

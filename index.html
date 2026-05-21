@@ -360,13 +360,13 @@
                                 <thead>
                                     <tr>
                                         <th>รหัสจอง</th>
-                                        <th>วันที่จอง</th>
-                                        <th>เจ้าของงาน (ลูกค้า)</th>
-                                        <th>ต้น (Shipper)</th>
-                                        <th>ต้นทาง (Origin)</th>
+                                        <th id="th-bk-date" data-label="วันที่จอง" onclick="sortBookingBy('date')" style="cursor:pointer;user-select:none;">วันที่จอง</th>
+                                        <th id="th-bk-customer" data-label="เจ้าของงาน (ลูกค้า)" onclick="sortBookingBy('customer')" style="cursor:pointer;user-select:none;">เจ้าของงาน (ลูกค้า)</th>
+                                        <th id="th-bk-shipper" data-label="ต้น (Shipper)" onclick="sortBookingBy('shipper')" style="cursor:pointer;user-select:none;">ต้น (Shipper)</th>
+                                        <th id="th-bk-origin" data-label="ต้นทาง (Origin)" onclick="sortBookingBy('origin')" style="cursor:pointer;user-select:none;">ต้นทาง (Origin)</th>
                                         <th>เวลา</th>
-                                        <th>ปลายทาง (Destination)</th>
-                                        <th>ประเภทรถ</th>
+                                        <th id="th-bk-destination" data-label="ปลายทาง (Destination)" onclick="sortBookingBy('destination')" style="cursor:pointer;user-select:none;">ปลายทาง (Destination)</th>
+                                        <th id="th-bk-trucktype" data-label="ประเภทรถ" onclick="sortBookingBy('truckType')" style="cursor:pointer;user-select:none;">ประเภทรถ</th>
                                         <th>คนขับ / ทะเบียน</th>
                                         <th>รถร่วม / ทะเบียนร่วม</th>
                                         <th>ค่าบริการ (บาท)</th>
@@ -417,15 +417,15 @@
                                     <table class="premium-table" id="jobs-table">
                                         <thead>
                                             <tr>
-                                                <th>รหัสใบงาน</th>
+                                                <th id="th-job-id" data-label="รหัสใบงาน" onclick="sortJobBy('id')" style="cursor:pointer;user-select:none;">รหัสใบงาน</th>
                                                 <th>รหัสจอง</th>
-                                                <th>ลูกค้า</th>
-                                                <th>ประเภทรถ</th>
-                                                <th>ต้นทาง - ปลายทาง</th>
+                                                <th id="th-job-customer" data-label="ลูกค้า" onclick="sortJobBy('customer')" style="cursor:pointer;user-select:none;">ลูกค้า</th>
+                                                <th id="th-job-trucktype" data-label="ประเภทรถ" onclick="sortJobBy('truckType')" style="cursor:pointer;user-select:none;">ประเภทรถ</th>
+                                                <th id="th-job-route" data-label="ต้นทาง - ปลายทาง" onclick="sortJobBy('route')" style="cursor:pointer;user-select:none;">ต้นทาง - ปลายทาง</th>
                                                 <th>ผู้รับงาน</th>
                                                 <th>ทะเบียน / คนขับ</th>
                                                 <th>ต้นทุน</th>
-                                                <th>สถานะ</th>
+                                                <th id="th-job-status" data-label="สถานะ" onclick="sortJobBy('status')" style="cursor:pointer;user-select:none;">สถานะ</th>
                                                 <th class="text-right">จัดการ</th>
                                             </tr>
                                         </thead>
@@ -485,13 +485,13 @@
                             <table class="premium-table" id="confirm-jobs-table">
                                 <thead>
                                     <tr>
-                                        <th>รหัสใบงาน</th>
-                                        <th>ลูกค้า</th>
+                                        <th id="th-cj-id" data-label="รหัสใบงาน" onclick="sortConfirmBy('id')" style="cursor:pointer;user-select:none;">รหัสใบงาน</th>
+                                        <th id="th-cj-customer" data-label="ลูกค้า" onclick="sortConfirmBy('customer')" style="cursor:pointer;user-select:none;">ลูกค้า</th>
                                         <th>เส้นทาง</th>
-                                        <th>ทะเบียนรถ / คนขับ (ผู้ขนส่ง)</th>
+                                        <th id="th-cj-driver" data-label="ทะเบียนรถ / คนขับ (ผู้ขนส่ง)" onclick="sortConfirmBy('driverName')" style="cursor:pointer;user-select:none;">ทะเบียนรถ / คนขับ (ผู้ขนส่ง)</th>
                                         <th>เบี้ยเลี้ยง/เที่ยววิ่ง</th>
                                         <th>ค่าใช้จ่ายสะสม</th>
-                                        <th>สถานะหน้างาน</th>
+                                        <th id="th-cj-status" data-label="สถานะหน้างาน" onclick="sortConfirmBy('status')" style="cursor:pointer;user-select:none;">สถานะหน้างาน</th>
                                         <th class="text-right">การยืนยันสถานะ</th>
                                     </tr>
                                 </thead>
@@ -971,11 +971,11 @@
                             <table class="premium-table" id="route-masters-table">
                                 <thead>
                                     <tr>
-                                        <th>ลูกค้า</th>
-                                        <th>Shipper</th>
-                                        <th>ต้นทาง (Origin)</th>
-                                        <th>ปลายทาง (Destination)</th>
-                                        <th>ประเภทรถ</th>
+                                        <th id="th-route-customer" data-label="ลูกค้า" onclick="sortRouteBy('customer')" style="cursor:pointer;user-select:none;">ลูกค้า</th>
+                                        <th id="th-route-shipper" data-label="Shipper" onclick="sortRouteBy('shipper')" style="cursor:pointer;user-select:none;">Shipper</th>
+                                        <th id="th-route-origin" data-label="ต้นทาง (Origin)" onclick="sortRouteBy('origin')" style="cursor:pointer;user-select:none;">ต้นทาง (Origin)</th>
+                                        <th id="th-route-destination" data-label="ปลายทาง (Destination)" onclick="sortRouteBy('destination')" style="cursor:pointer;user-select:none;">ปลายทาง (Destination)</th>
+                                        <th id="th-route-trucktype" data-label="ประเภทรถ" onclick="sortRouteBy('truckType')" style="cursor:pointer;user-select:none;">ประเภทรถ</th>
                                         <th class="text-right">ราคา (THB)</th>
                                         <th>หมายเหตุ</th>
                                         <th class="text-right">จัดการ</th>
